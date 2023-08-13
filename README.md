@@ -9,7 +9,7 @@ Emulate AWS λ and aws-sdk locally when developing your Serverless node.js proje
 
 ## demo
 
-* server: `pnpm dev`, see `src/dev.ts`
+* server: `pnpm dev`, see `examples/dev.ts`
 * client: `wscat -c "ws://127.0.0.1:9001/path?foo=1&foo=2"`
 * aws-sdk example: `node ./examples/index.mjs {connectionId}`
 

@@ -7,7 +7,7 @@ import {
   ApiGatewayManagementApiClient,
   PostToConnectionCommand,
 } from "@aws-sdk/client-apigatewaymanagementapi";
-import { StandAlone, FunctionDefinition } from "./index.js";
+import { StandAlone, FunctionDefinition } from "../src/index.js";
 
 const websocket_connect: APIGatewayProxyHandler = async (event, context) => {
   const connectionId = event.requestContext.connectionId!;

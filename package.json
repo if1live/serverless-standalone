@@ -20,7 +20,7 @@
     "build": "tsc",
     "check:watch": "tsc --watch",
     "clean": "rimraf dist",
-    "dev": "node --watch --loader=tsx ./src/dev.ts",
+    "dev": "node --watch --loader=tsx ./examples/dev.ts",
     "test": "vitest run",
     "fix": "prettier --write \"**/*.{ts,tsx,md}\"",
     "circularDepCheck": "madge --circular src"
