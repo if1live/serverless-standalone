@@ -28,6 +28,8 @@
     "ws": "^8.13.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "~3.188.0",
+    "@types/aws-lambda": "^8.10.119",
     "@types/node": "^18.17.2",
     "@types/ws": "^8.5.5",
     "prettier": "^3.0.1",
