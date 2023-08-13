@@ -33,6 +33,7 @@
     "@types/aws-lambda": "^8.10.119",
     "@types/node": "^18.17.2",
     "@types/ws": "^8.5.5",
+    "madge": "^6.1.0",
     "prettier": "^3.0.1",
     "rimraf": "^5.0.1",
     "tsx": "^3.12.7",
