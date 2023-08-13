@@ -1,0 +1,40 @@
+{
+  "name": "serverless-standalone",
+  "version": "0.0.1",
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "if1live",
+  "sideEffects": false,
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist/*",
+    "dist/src/*",
+    "!dist/test/*",
+    "!dist/examples/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "check:watch": "tsc --watch",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "fix": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "circularDepCheck": "madge --circular src"
+  },
+  "dependencies": {
+    "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.17.2",
+    "@types/ws": "^8.5.5",
+    "prettier": "^3.0.1",
+    "rimraf": "^5.0.1",
+    "tsx": "^3.12.7",
+    "typescript": "^5.1.6",
+    "vitest": "^0.34.1"
+  },
+  "packageManager": "pnpm@8.6.7"
+}
