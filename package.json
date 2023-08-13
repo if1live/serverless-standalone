@@ -1,8 +1,11 @@
 {
   "name": "serverless-standalone",
   "version": "0.0.1",
-  "description": "",
-  "keywords": [],
+  "description": "Emulate AWS λ and aws-sdk locally when developing your Serverless node.js project",
+  "keywords": [
+    "serverless",
+    "aws-lambda"
+  ],
   "license": "ISC",
   "author": "if1live",
   "sideEffects": false,
