@@ -5,6 +5,7 @@ Emulate AWS λ and aws-sdk locally when developing your Serverless node.js proje
 ## features
 
 * AWS WebSocket API + @aws-sdk/client-apigatewaymanagementapi
+* [Schedule](https://www.serverless.com/framework/docs/providers/aws/events/schedule)
 
 ## demo
 
@@ -23,9 +24,6 @@ const websocket_connect: APIGatewayProxyHandler = async (event, context) => {
 const websocket_disconnect: APIGatewayProxyHandler = async (event, context) => {
   ...
 }
-const websocket_message: APIGatewayProxyWebsocketHandlerV2 = async (
-  ...
-}
 
 const definitions: FunctionDefinition[] = [
   {
@@ -35,10 +33,6 @@ const definitions: FunctionDefinition[] = [
   {
     handler: websocket_disconnect,
     events: [{ websocket: { route: "$disconnect" } }],
-  },
-  {
-    handler: websocket_message,
-    events: [{ websocket: { route: "$default" } }],
   },
 ];
 ```
@@ -54,7 +48,7 @@ await StandAlone.start(definitions, {
 ```
 
 connect websocket. aws lambda handler are invoked.
-`wscat -c "ws://127.0.0.1:9001/path?username=me&password=pw"`
+ `wscat -c "ws://127.0.0.1:9001/path?username=me&password=pw"`
 
 use aws-sdk locally.
 

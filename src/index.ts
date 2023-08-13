@@ -1,6 +1,7 @@
 import http from "http";
 import * as helpers from "./helpers.js";
 import * as apigatewaymanagementapi from "./apigatewaymanagementapi/index.js";
+import * as schedule from "./schedule/index.js";
 import { FunctionDefinition } from "./types.js";
 
 const main_api = async (port: number) => {
@@ -37,6 +38,7 @@ export const StandAlone = {
     await Promise.all([
       main_api(ports.api),
       apigatewaymanagementapi.execute(ports.websocket, functions),
+      schedule.execute(functions),
     ]);
   },
 };

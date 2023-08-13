@@ -1,6 +1,7 @@
 import {
   APIGatewayProxyHandler,
   APIGatewayProxyWebsocketHandlerV2,
+  ScheduledHandler,
 } from "aws-lambda";
 import {
   ApiGatewayManagementApiClient,
@@ -54,6 +55,13 @@ const websocket_message: APIGatewayProxyWebsocketHandlerV2 = async (
   return { statusCode: 200, body: "OK" };
 };
 
+const schedule_simple: ScheduledHandler = async (event, context) => {
+  console.log("schedule", {
+    time: event.time,
+    detail: event.detail,
+  });
+};
+
 const definitions: FunctionDefinition[] = [
   {
     handler: websocket_connect,
@@ -66,6 +74,18 @@ const definitions: FunctionDefinition[] = [
   {
     handler: websocket_message,
     events: [{ websocket: { route: "$default" } }],
+  },
+  {
+    handler: schedule_simple,
+    events: [
+      {
+        schedule: {
+          rate: "*/10 * * * * *",
+          enabled: true,
+          input: { foo: 1, bar: 2 },
+        },
+      },
+    ],
   },
 ];
 

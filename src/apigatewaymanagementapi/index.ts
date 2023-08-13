@@ -23,15 +23,15 @@ function touchSocket(sock: MyWebSocket) {
 }
 
 const isConnectFn = (x: FunctionDefinition) => {
-  return x.events.find((x) => x.websocket?.route === "$connect");
+  return x.events.some((x) => x.websocket?.route === "$connect");
 };
 
 const isDisconnectFn = (x: FunctionDefinition) => {
-  return x.events.find((x) => x.websocket?.route === "$disconnect");
+  return x.events.some((x) => x.websocket?.route === "$disconnect");
 };
 
 const isDefaultFn = (x: FunctionDefinition) => {
-  return x.events.find((x) => x.websocket?.route === "$default");
+  return x.events.some((x) => x.websocket?.route === "$default");
 };
 
 const sockets = new Map<string, MyWebSocket>();

@@ -34,6 +34,10 @@ export function createUniqueId() {
   return text.split("-").join("");
 }
 
+export function uuid() {
+  return randomUUID();
+}
+
 // https://github.com/dherault/serverless-offline/blob/master/src/lambda/LambdaContext.js
 export function generateLambdaContext(
   functionName: string,
