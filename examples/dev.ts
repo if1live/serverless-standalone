@@ -1,6 +1,7 @@
 import {
   APIGatewayProxyHandler,
   APIGatewayProxyWebsocketHandlerV2,
+  IoTHandler,
   ScheduledHandler,
 } from "aws-lambda";
 import {
@@ -62,6 +63,10 @@ const schedule_simple: ScheduledHandler = async (event, context) => {
   });
 };
 
+const iot_simple: IoTHandler = async (event, context) => {
+  console.log("iot_simple", event);
+};
+
 const definitions: FunctionDefinition[] = [
   {
     handler: websocket_connect,
@@ -87,10 +92,26 @@ const definitions: FunctionDefinition[] = [
       },
     ],
   },
+  {
+    handler: iot_simple,
+    events: [
+      {
+        iot: {
+          sql: "SELECT * FROM 'pub/foo'",
+        },
+      },
+    ],
+  },
 ];
 
-await StandAlone.start(definitions, {
-  http: 9000,
-  websocket: 9001,
-  api: 9002,
+await StandAlone.start({
+  functions: definitions,
+  ports: {
+    http: 9000,
+    websocket: 9001,
+    api: 9002,
+  },
+  urls: {
+    mqtt: "mqtt://artemis:artemis@127.0.0.1:1883",
+  },
 });

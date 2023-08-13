@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  # http://localhost:8161
+  # user: artemis / password: artemis
+  # podman + islandora/activemq:2
+  # "chmod: /dev/stdin: Operation not permitted" 에러 발생하고 activemq가 뜨지 않는다
+  # activemq 대안으로 apache/activemq-classic 를 썼는데 웹콘솔이 뜨질 않는다
+  # apache/activemq-artemis는 amazon mq와 버전이 다르지만 기능은 똑같으니까 대신 쓰자
+  # apache/activemq-artemis 사용하면 mqtt 접속시 암호가 필요하다. admin하고 똑같은거 쓰면됨
+  activemq:
+    image: apache/activemq-artemis
+    ports:
+      - "1883:1883" # MQTT
+      - "5672:5672" # AMPQ
+      - "8161:8161" # WebConsole
+      - "61613:61613" # STOMP
+      - "61614:61614" # WS
+      - "61616:61616" # OpenWire

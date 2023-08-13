@@ -2,6 +2,7 @@ import http from "http";
 import * as helpers from "./helpers.js";
 import * as apigatewaymanagementapi from "./apigatewaymanagementapi/index.js";
 import * as schedule from "./schedule/index.js";
+import * as iot from "./iot/index.js";
 import { FunctionDefinition } from "./types.js";
 
 const main_api = async (port: number) => {
@@ -26,21 +27,44 @@ const dispatchApi: http.RequestListener = async (req, res) => {
   }
 };
 
+async function start(params: {
+  functions: FunctionDefinition[];
+  ports: {
+    http: number;
+    websocket: number;
+    api: number;
+  };
+  urls: {
+    mqtt?: string;
+  };
+}) {
+  const { functions, ports, urls } = params;
+
+  const fn_apigatewaymanagementapi = async () => {
+    await apigatewaymanagementapi.execute(ports.websocket, functions);
+  };
+
+  const fn_schedule = async () => {
+    await schedule.execute(functions);
+  };
+
+  const fn_iot = async () => {
+    if (typeof urls.mqtt !== "string") {
+      return;
+    }
+    await iot.execute(urls.mqtt, functions);
+  };
+
+  await Promise.all([
+    main_api(ports.api),
+    fn_apigatewaymanagementapi(),
+    fn_schedule(),
+    fn_iot(),
+  ]);
+}
+
 export const StandAlone = {
-  async start(
-    functions: FunctionDefinition[],
-    ports: {
-      http: number;
-      websocket: number;
-      api: number;
-    },
-  ) {
-    await Promise.all([
-      main_api(ports.api),
-      apigatewaymanagementapi.execute(ports.websocket, functions),
-      schedule.execute(functions),
-    ]);
-  },
+  start,
 };
 
 export * from "./types.js";
