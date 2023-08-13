@@ -4,14 +4,14 @@ Emulate AWS λ and aws-sdk locally when developing your Serverless node.js proje
 
 ## features
 
-* AWS WebSocket API + @aws-sdk/client-apigatewaymanagementapi
-* [Schedule](https://www.serverless.com/framework/docs/providers/aws/events/schedule)
+- AWS WebSocket API + @aws-sdk/client-apigatewaymanagementapi
+- [Schedule](https://www.serverless.com/framework/docs/providers/aws/events/schedule)
 
 ## demo
 
-* server: `pnpm dev`, see `examples/dev.ts`
-* client: `wscat -c "ws://127.0.0.1:9001/path?foo=1&foo=2"`
-* aws-sdk example: `node ./examples/index.mjs {connectionId}`
+- server: `pnpm dev`, see `examples/dev.ts`
+- client: `wscat -c "ws://127.0.0.1:9001/path?foo=1&foo=2"`
+- aws-sdk example: `node ./examples/index.mjs {connectionId}`
 
 ## usage
 
@@ -48,7 +48,7 @@ await StandAlone.start(definitions, {
 ```
 
 connect websocket. aws lambda handler are invoked.
- `wscat -c "ws://127.0.0.1:9001/path?username=me&password=pw"`
+`wscat -c "ws://127.0.0.1:9001/path?username=me&password=pw"`
 
 use aws-sdk locally.
 
