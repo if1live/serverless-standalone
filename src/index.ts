@@ -1,6 +1,6 @@
 import http from "http";
 import * as helpers from "./helpers.js";
-import * as app_ApiGatewayManagementApi from "./app_ApiGatewayManagementApi.js";
+import * as apigatewaymanagementapi from "./apigatewaymanagementapi/index.js";
 import { FunctionDefinition } from "./types.js";
 
 const main_api = async (port: number) => {
@@ -9,8 +9,8 @@ const main_api = async (port: number) => {
 
 const dispatchApi: http.RequestListener = async (req, res) => {
   try {
-    if (req.url?.startsWith(app_ApiGatewayManagementApi.prefix)) {
-      return app_ApiGatewayManagementApi.handle(req, res);
+    if (req.url?.startsWith(apigatewaymanagementapi.prefix)) {
+      return apigatewaymanagementapi.handle(req, res);
     } else {
       const data = {
         message: `${req.method} ${req.url} NotFound`,
@@ -29,13 +29,14 @@ export const StandAlone = {
   async start(
     functions: FunctionDefinition[],
     ports: {
+      http: number;
       websocket: number;
       api: number;
     },
   ) {
     await Promise.all([
       main_api(ports.api),
-      app_ApiGatewayManagementApi.execute(ports.websocket, functions),
+      apigatewaymanagementapi.execute(ports.websocket, functions),
     ]);
   },
 };

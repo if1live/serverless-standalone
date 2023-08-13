@@ -8,7 +8,7 @@ import {
 const client = new ApiGatewayManagementApiClient({
   // region이 없으면 작동하지 않는다
   region: "ap-northeast-1",
-  endpoint: "http://127.0.0.1:9000/apigatewaymanagementapi/",
+  endpoint: "http://127.0.0.1:9002/apigatewaymanagementapi/",
   credentials: {
     accessKeyId: "localAccessKeyId",
     secretAccessKey: "localAecretAccessKey",

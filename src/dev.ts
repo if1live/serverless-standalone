@@ -38,7 +38,7 @@ const websocket_message: APIGatewayProxyWebsocketHandlerV2 = async (
   // echo
   const client = new ApiGatewayManagementApiClient({
     region: "ap-northeast-1",
-    endpoint: "http://127.0.0.1:9000/apigatewaymanagementapi/",
+    endpoint: "http://127.0.0.1:9002/apigatewaymanagementapi/",
     credentials: {
       accessKeyId: "localAccessKeyId",
       secretAccessKey: "localAecretAccessKey",
@@ -70,6 +70,7 @@ const definitions: FunctionDefinition[] = [
 ];
 
 await StandAlone.start(definitions, {
+  http: 9000,
   websocket: 9001,
-  api: 9000,
+  api: 9002,
 });

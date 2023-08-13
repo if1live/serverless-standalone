@@ -5,10 +5,6 @@ import {
 } from "aws-lambda";
 
 export type AwsApiHandler = http.RequestListener;
-export type ServiceRunner = (
-  port: number,
-  definitions: FunctionDefinition[],
-) => Promise<void>;
 
 export type FunctionEvent = {
   websocket?: {

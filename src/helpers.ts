@@ -1,3 +1,4 @@
+import { Context } from "aws-lambda";
 import http from "http";
 import { randomUUID } from "node:crypto";
 
@@ -32,3 +33,25 @@ export function createUniqueId() {
   const text = randomUUID();
   return text.split("-").join("");
 }
+
+// https://github.com/dherault/serverless-offline/blob/master/src/lambda/LambdaContext.js
+export function generateLambdaContext(
+  functionName: string,
+  awsRequestId: string,
+): Context {
+  const context: Partial<Context> = {
+    awsRequestId,
+    callbackWaitsForEmptyEventLoop: true,
+    clientContext: undefined,
+    functionName,
+    functionVersion: "$LATEST",
+    identity: undefined,
+    invokedFunctionArn: `offline_invokedFunctionArn_for_${functionName}`,
+    logGroupName: `offline_logGroupName_for_${functionName}`,
+    logStreamName: `offline_logStreamName_for_${functionName}`,
+    memoryLimitInMB: "1024",
+  };
+  return context as any;
+}
+
+export const emptyCallback = () => {};
