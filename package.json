@@ -28,6 +28,9 @@
     "fix": "prettier --write \"**/*.{ts,mjs,md}\"",
     "circularDepCheck": "madge --circular src"
   },
+  "resolutions": {
+    "aws-sdk": "2.1311.0"
+  },
   "dependencies": {
     "cron": "^2.4.0",
     "mqtt": "^5.0.2",

@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  aws-sdk: 2.1311.0
+
 dependencies:
   cron:
     specifier: ^2.4.0
