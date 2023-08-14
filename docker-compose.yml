@@ -17,3 +17,9 @@ services:
       - "61613:61613" # STOMP
       - "61614:61614" # WS
       - "61616:61616" # OpenWire
+
+  sqs:
+    image: softwaremill/elasticmq-native:1.4.3
+    ports:
+      - "9324:9324"
+      - "9325:9325"
