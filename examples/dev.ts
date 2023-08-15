@@ -1,4 +1,5 @@
 import { StandAlone, FunctionDefinition } from "../src/index.js";
+import { definitions as definitions_httpApi } from "./e2e_httpApi.js";
 import { definitions as definitions_websocket } from "./e2e_websocket.js";
 import { definitions as definitions_lambda } from "./e2e_lambda.js";
 import { definitions as definitions_schedule } from "./e2e_schedule.js";
@@ -12,6 +13,7 @@ import {
 } from "./e2e_iot.js";
 
 const definitions: FunctionDefinition[] = [
+  ...definitions_httpApi,
   ...definitions_websocket,
   ...definitions_lambda,
   ...definitions_schedule,

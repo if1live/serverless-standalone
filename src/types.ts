@@ -32,7 +32,16 @@ export interface FunctionEvent_IoT extends FunctionEvent_Base {
 
 // HTTP API만 지원해도 충분할듯
 export interface FunctionEvent_ApiGatewayProxyV2 extends FunctionEvent_Base {
-  method: "*";
+  method:
+    | "ANY"
+    | "GET"
+    | "POST"
+    | "DELETE"
+    | "PATCH"
+    | "PUT"
+    | "OPTIONS"
+    | "HEAD";
+
   path: string;
 }
 
