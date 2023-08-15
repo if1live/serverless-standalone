@@ -5,7 +5,6 @@ import * as schedule from "./schedule/index.js";
 import * as lambda from "./lambda/index.js";
 import * as iot from "./iot/index.js";
 import * as sqs from "./sqs/index.js";
-import * as sns from "./sns/index.js";
 import { FunctionDefinition } from "./types.js";
 
 async function start(params: {
@@ -18,7 +17,6 @@ async function start(params: {
   urls: {
     mqtt?: string;
     sqs?: string;
-    sns?: string;
   };
 }) {
   const { functions, ports, urls } = params;
@@ -78,12 +76,6 @@ async function start(params: {
     }
   };
 
-  const fn_sns = async () => {
-    if (urls.sns) {
-      await sns.execute(urls.sns, functions);
-    }
-  };
-
   await Promise.all([
     main_http(ports.http),
     main_api(ports.api),
@@ -91,7 +83,6 @@ async function start(params: {
     fn_schedule(),
     fn_iot(),
     fn_sqs(),
-    fn_sns(),
   ]);
 }
 

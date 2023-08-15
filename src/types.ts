@@ -5,7 +5,6 @@ import {
   APIGatewayProxyWebsocketHandlerV2,
   Context,
   IoTHandler,
-  SNSHandler,
   SQSHandler,
   ScheduledHandler,
 } from "aws-lambda";
@@ -43,17 +42,12 @@ export interface FunctionEvent_SQS extends FunctionEvent_Base {
   batchSize?: number;
 }
 
-export interface FunctionEvent_SNS extends FunctionEvent_Base {
-  topicName: string;
-}
-
 export type FunctionEvent = {
   httpApi?: FunctionEvent_ApiGatewayProxyV2;
   websocket?: FunctionEvent_WebSocket;
   schedule?: FunctionEvent_Schedule;
   iot?: FunctionEvent_IoT;
   sqs?: FunctionEvent_SQS;
-  sns?: FunctionEvent_SNS;
 };
 
 export type UnknownHandler = (event: any, context: Context) => Promise<any>;
@@ -63,7 +57,6 @@ export type FunctionHandler =
   | APIGatewayProxyHandlerV2
   | APIGatewayProxyWebsocketHandlerV2
   | IoTHandler
-  | SNSHandler
   | SQSHandler
   | ScheduledHandler
   | UnknownHandler;
