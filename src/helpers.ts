@@ -59,3 +59,19 @@ export function generateLambdaContext(
 }
 
 export const emptyCallback = () => {};
+
+// https://stackoverflow.com/a/19524949
+export const parseIp = (req: http.IncomingMessage) => {
+  const header_forwardedFor = req.headers["x-forwarded-for"];
+
+  let forwardedFor;
+  if (typeof header_forwardedFor === "string") {
+    forwardedFor = header_forwardedFor;
+  } else if (Array.isArray(header_forwardedFor)) {
+    forwardedFor = header_forwardedFor[0];
+  }
+
+  return forwardedFor
+    ? forwardedFor.split(",").shift()
+    : req.socket?.remoteAddress;
+};

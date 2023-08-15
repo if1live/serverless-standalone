@@ -10,9 +10,9 @@ import { FunctionDefinition } from "./types.js";
 async function start(params: {
   functions: FunctionDefinition[];
   ports: {
-    http: number;
+    httpApi: number;
     websocket: number;
-    api: number;
+    awsApi: number;
   };
   urls: {
     mqtt?: string;
@@ -23,7 +23,7 @@ async function start(params: {
 
   const lambdaMain = lambda.create(functions);
 
-  const main_api = async (port: number) => {
+  const main_awsApi = async (port: number) => {
     http.createServer(dispatchApi).listen(port);
   };
 
@@ -47,21 +47,25 @@ async function start(params: {
     }
   };
 
-  const main_http = async (port: number) => {
-    http.createServer(dispatchHttp).listen(port);
+  const fn_apigateway_httpApi = async (port: number) => {
+    // TODO: 핸들러 없으면 건너뛰도록
+    if (true) {
+      await apigateway.httpApi.execute(port, functions);
+    }
   };
 
-  const dispatchHttp: http.RequestListener = async (req, res) => {
-    console.log(`httpApi ${req.method} ${req.url}`);
-    helpers.replyJson(res, 200, { ok: true });
-  };
-
-  const fn_apigateway_websocket = async () => {
-    await apigateway.websocket.execute(ports.websocket, functions);
+  const fn_apigateway_websocket = async (port: number) => {
+    // TODO:  핸들러 없으면 건너뛰도록
+    if (true) {
+      await apigateway.websocket.execute(port, functions);
+    }
   };
 
   const fn_schedule = async () => {
-    await schedule.execute(functions);
+    // TODO:  핸들러 없으면 건너뛰도록
+    if (true) {
+      await schedule.execute(functions);
+    }
   };
 
   const fn_iot = async () => {
@@ -77,9 +81,9 @@ async function start(params: {
   };
 
   await Promise.all([
-    main_http(ports.http),
-    main_api(ports.api),
-    fn_apigateway_websocket(),
+    main_awsApi(ports.awsApi),
+    fn_apigateway_httpApi(ports.httpApi),
+    fn_apigateway_websocket(ports.websocket),
     fn_schedule(),
     fn_iot(),
     fn_sqs(),

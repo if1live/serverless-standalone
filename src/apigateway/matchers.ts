@@ -28,7 +28,7 @@ const method_build = (method: HttpMethod): MethodMatcher => {
   }
 };
 
-const method_match = (self: MethodMatcher, method: HttpMethod): boolean => {
+const method_match = (self: MethodMatcher, method: string): boolean => {
   switch (self._tag) {
     case "any":
       return true;
@@ -86,6 +86,10 @@ const path_match = (
 };
 
 const path_toSorted = (list: PathMatcher[]): PathMatcher[] => {
+  return [...list].sort(path_compare);
+};
+
+const path_compare = (a: PathMatcher, b: PathMatcher) => {
   const calculate_prior = (m: PathMatcher) => {
     if (m._tag === "exact") {
       return 1;
@@ -95,17 +99,16 @@ const path_toSorted = (list: PathMatcher[]): PathMatcher[] => {
     }
   };
 
-  return [...list].sort((a, b) => {
-    const prior_a = calculate_prior(a);
-    const prior_b = calculate_prior(b);
-    return prior_a - prior_b;
-  });
+  const prior_a = calculate_prior(a);
+  const prior_b = calculate_prior(b);
+  return prior_a - prior_b;
 };
 
 export const PathMatcher = {
   build: path_build,
   match: path_match,
   toSorted: path_toSorted,
+  compare: path_compare,
 };
 
 /**
