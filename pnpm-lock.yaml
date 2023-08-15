@@ -12,14 +12,14 @@ dependencies:
     specifier: ~3.188.0
     version: 3.188.0
   cron:
-    specifier: ^2.4.0
-    version: 2.4.0
+    specifier: ^2.4.1
+    version: 2.4.1
   mqtt:
     specifier: ^5.0.2
     version: 5.0.2
   remeda:
-    specifier: ^1.24.0
-    version: 1.24.0
+    specifier: ^1.24.1
+    version: 1.24.1
   ws:
     specifier: ^8.13.0
     version: 8.13.0
@@ -35,7 +35,7 @@ devDependencies:
     specifier: ^8.10.119
     version: 8.10.119
   '@types/node':
-    specifier: ^18.17.2
+    specifier: ^18.17.5
     version: 18.17.5
   '@types/ws':
     specifier: ^8.5.5
@@ -1617,8 +1617,8 @@ packages:
       typedarray: 0.0.6
     dev: false
 
-  /cron@2.4.0:
-    resolution: {integrity: sha512-Cx77ic1TyIAtUggr0oAhtS8MLzPBUqGNIvdDM7jE3oFIxfe8LXWI9q3iQN/H2CebAiMir53LQKWOhEKnzkJTAQ==}
+  /cron@2.4.1:
+    resolution: {integrity: sha512-ty0hUSPuENwDtIShDFxUxWEIsqiu2vhoFtt6Vwrbg4lHGtJX2/cV2p0hH6/qaEM9Pj+i6mQoau48BO5wBpkP4w==}
     dependencies:
       luxon: 3.4.0
     dev: false
@@ -2776,8 +2776,8 @@ packages:
     resolution: {integrity: sha512-QIRet3SYrGp0HUHO88jVskiG6seqUGC5iAG7AwI/BV4ypGcuqk9Du6YQBUOUqm9c8pw1eyLoIaONifRua1lsEQ==}
     dev: false
 
-  /remeda@1.24.0:
-    resolution: {integrity: sha512-tjLxwU4yLtvX8yHlePnE7CdQXRe2pKatlVY+AunqAQV5t9FNw1yuiIAqKpu6zevd+No5LQHEJ/HK3r3ZFK7KXg==}
+  /remeda@1.24.1:
+    resolution: {integrity: sha512-BHJ43Um1Ykczaaz6Ew/I3JzJmU8DMB9uQgLBGf3XCKI9wxgsLIg1OX0YEv2qPUSUcwY/Nbk5kA97Yq9WnZs0Jg==}
     dev: false
 
   /requirejs-config-file@4.0.0:
