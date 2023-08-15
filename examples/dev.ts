@@ -133,7 +133,7 @@ const definitions: FunctionDefinition[] = [
       {
         sqs: {
           queueName: "hello-queue",
-          batchSize: 2,
+          batchSize: 10,
         },
       },
     ],

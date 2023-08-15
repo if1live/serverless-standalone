@@ -8,11 +8,17 @@ client.on("connect", async () => {
 
   const topic_foo = "pub/foo";
   const topic_drop = "pub/drop";
-  for (let i = 1; i <= 999; i++) {
+
+  const loop = 1;
+  for (let i = 1; i <= loop; i++) {
     await client.publishAsync(topic_foo, JSON.stringify({ tag: "foo", i }));
     await client.publishAsync(topic_drop, JSON.stringify({ tag: "drop", i }));
     console.log("publish", i);
 
-    await delay(1_000);
+    if (i !== loop) {
+      await delay(1_000);
+    }
   }
+
+  process.exit(0);
 });
