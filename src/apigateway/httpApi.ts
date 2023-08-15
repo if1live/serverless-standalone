@@ -60,15 +60,21 @@ export const execute = async (
     const userAgent = req.headers["user-agent"];
     const sourceIp = helpers.parseIp(req);
 
-    // TODO: query string?
-    // search: '?a=b',
-    // searchParams: URLSearchParams { 'a' => 'b' },
+    const found = functions
+      .map((x) => {
+        const match_method = MethodMatcher.match(x.matcher_method, method);
+        const match_path = PathMatcher.match(x.matcher_path, rawPath);
 
-    const found = functions.find((x) => {
-      const match_method = MethodMatcher.match(x.matcher_method, method);
-      const match_path = PathMatcher.match(x.matcher_path, rawPath);
-      return match_method && match_path;
-    });
+        return {
+          name: x.name,
+          handler: x.handler,
+          event: x.event,
+          match_method,
+          match_path,
+        };
+      })
+      .find((x) => x.match_method && x.match_path);
+
     if (!found) {
       const json = { message: "Not Found" };
       return helpers.replyJson(res, 404, json);
@@ -111,7 +117,7 @@ export const execute = async (
       queryStringParameters[key] = value.join(",");
     }
 
-    const pathParameters: Record<string, string> = {};
+    const pathParameters = found.match_path ?? {};
 
     // https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html
     const event: Partial<APIGatewayProxyEventV2> = {

@@ -41,7 +41,7 @@ describe("PathMatcher#match", () => {
     });
   });
 
-  describe.skip("fixed argument", () => {
+  describe("fixed argument", () => {
     const matcher = PathMatcher.build("/pets/dog/{id}");
 
     it("match", () => {
@@ -51,19 +51,18 @@ describe("PathMatcher#match", () => {
     });
   });
 
-  describe.skip("variadic argument", () => {
+  describe("variadic argument", () => {
     const matcher = PathMatcher.build("/pets/{proxy+}");
 
     it("match", () => {
+      assert.deepEqual(PathMatcher.match(matcher, "/pets/"), null);
       assert.deepEqual(PathMatcher.match(matcher, "/pets/dog/"), {
         proxy: "dog/",
       });
-
       assert.deepEqual(PathMatcher.match(matcher, "/pets/dog/1"), {
         proxy: "dog/1",
       });
-
-      assert.deepEqual(PathMatcher.match(matcher, "/pets/dog/1"), {
+      assert.deepEqual(PathMatcher.match(matcher, "/pets/dog/1/"), {
         proxy: "dog/1/",
       });
     });
