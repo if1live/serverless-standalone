@@ -37,37 +37,21 @@ export const definitions: FunctionDefinition[] = [
   {
     name: "http_exact_get",
     handler: http_exact_get,
-    events: [
-      {
-        httpApi: { method: "GET", path: "/foo" },
-      },
-    ],
+    events: [{ httpApi: { route: "GET /foo" } }],
   },
   {
     name: "http_exact_post",
     handler: http_exact_post,
-    events: [
-      {
-        httpApi: { method: "POST", path: "/foo" },
-      },
-    ],
+    events: [{ httpApi: { route: "POST /foo" } }],
   },
   {
     name: "http_fixed",
     handler: http_fixed,
-    events: [
-      {
-        httpApi: { method: "ANY", path: "/fixed/{foo}/{bar}" },
-      },
-    ],
+    events: [{ httpApi: { route: "ANY /fixed/{foo}/{bar}" } }],
   },
   {
     name: "http_variadic",
     handler: http_variadic,
-    events: [
-      {
-        httpApi: { method: "ANY", path: "/variadic/{proxy+}" },
-      },
-    ],
+    events: [{ httpApi: { route: "ANY /variadic/{proxy+}" } }],
   },
 ];

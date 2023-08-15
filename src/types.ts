@@ -30,19 +30,25 @@ export interface FunctionEvent_IoT extends FunctionEvent_Base {
   sql: string;
 }
 
+export type HttpMethod =
+  | "*"
+  | "ANY"
+  | "GET"
+  | "POST"
+  | "DELETE"
+  | "PATCH"
+  | "PUT"
+  | "OPTIONS"
+  | "HEAD";
+
+export type HttpPath = `/${string}`;
+
+// method, path 묶어서 관리하고 싶다
+export type HttpRoute = `${HttpMethod} ${HttpPath}`;
+
 // HTTP API만 지원해도 충분할듯
 export interface FunctionEvent_ApiGatewayProxyV2 extends FunctionEvent_Base {
-  method:
-    | "ANY"
-    | "GET"
-    | "POST"
-    | "DELETE"
-    | "PATCH"
-    | "PUT"
-    | "OPTIONS"
-    | "HEAD";
-
-  path: string;
+  route: HttpRoute;
 }
 
 export interface FunctionEvent_SQS extends FunctionEvent_Base {

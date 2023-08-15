@@ -1,4 +1,4 @@
-import { FunctionEvent_ApiGatewayProxyV2 } from "../types.js";
+import { HttpMethod } from "../types.js";
 
 export type MethodMatcher_Exact = {
   _tag: "exact";
@@ -11,10 +11,9 @@ export type MethodMatcher_Any = {
 
 export type MethodMatcher = MethodMatcher_Exact | MethodMatcher_Any;
 
-const method_build = (
-  method: FunctionEvent_ApiGatewayProxyV2["method"],
-): MethodMatcher => {
+const method_build = (method: HttpMethod): MethodMatcher => {
   switch (method) {
+    case "*":
     case "ANY": {
       return {
         _tag: "any",
@@ -29,10 +28,7 @@ const method_build = (
   }
 };
 
-const method_match = (
-  self: MethodMatcher,
-  method: FunctionEvent_ApiGatewayProxyV2["method"],
-): boolean => {
+const method_match = (self: MethodMatcher, method: HttpMethod): boolean => {
   switch (self._tag) {
     case "any":
       return true;
