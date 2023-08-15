@@ -1,5 +1,5 @@
 import { Context } from "aws-lambda";
-import http from "http";
+import http from "node:http";
 import { randomUUID } from "node:crypto";
 
 // https://stackoverflow.com/a/76356734

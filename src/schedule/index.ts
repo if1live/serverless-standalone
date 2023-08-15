@@ -2,25 +2,33 @@ import { ScheduledEvent, ScheduledHandler } from "aws-lambda";
 import { CronJob } from "cron";
 import * as R from "remeda";
 import * as helpers from "../helpers.js";
-import { FunctionDefinition, FunctionEvent_Schedule } from "../types.js";
+import {
+  FunctionDefinition,
+  FunctionEvent_Schedule,
+  castFunctionDefinition,
+} from "../types.js";
 
 export const execute = async (definitions: FunctionDefinition[]) => {
-  const functions = definitions.flatMap((definition) => {
-    const handler = definition.handler as ScheduledHandler;
+  const functions = definitions.flatMap((definition0) => {
+    const definition = castFunctionDefinition<ScheduledHandler>(definition0);
     const events = definition.events
       .map((x) => x.schedule)
       .filter((schedule) => schedule?.enabled ?? true)
       .filter(R.isNot(R.isNil));
-    return events.map((sched) => ({ handler, sched }));
+    return events.map((sched) => ({
+      name: definition.name,
+      handler: definition.handler,
+      sched,
+    }));
   });
 
-  const jobs = functions.map(({ handler, sched }) => {
+  const jobs = functions.map(({ name, handler: f, sched }) => {
     return new CronJob(sched.rate, async () => {
       const now = new Date();
       const event = createEvent(sched, now);
       const awsRequestId = helpers.createUniqueId();
-      const context = helpers.generateLambdaContext(handler.name, awsRequestId);
-      await handler(event, context, helpers.emptyCallback);
+      const context = helpers.generateLambdaContext(name, awsRequestId);
+      await f(event, context, helpers.emptyCallback);
     });
   });
 

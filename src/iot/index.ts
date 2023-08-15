@@ -1,20 +1,25 @@
 import { IoTHandler } from "aws-lambda";
 import mqtt from "mqtt";
 import * as R from "remeda";
-import { FunctionDefinition } from "../types.js";
+import { FunctionDefinition, castFunctionDefinition } from "../types.js";
 import * as helpers from "../helpers.js";
 
 export const execute = async (
   url: string,
   definitions: FunctionDefinition[],
 ) => {
-  const functions = definitions.flatMap((definition) => {
-    const handler = definition.handler as IoTHandler;
+  const functions = definitions.flatMap((x) => {
+    const definition = castFunctionDefinition<IoTHandler>(x);
+
     const events = definition.events
       .map((x) => x.iot)
       .filter((iot) => iot?.enabled ?? true)
       .filter(R.isNot(R.isNil));
-    return events.map((iot) => ({ handler, iot }));
+    return events.map((iot) => ({
+      name: definition.name,
+      handler: definition.handler,
+      iot,
+    }));
   });
 
   const client = mqtt.connect(url);
@@ -43,16 +48,15 @@ export const execute = async (
 
     // TODO: handler mapping? topic에 맞는 핸들러만 찾기
     // TODO: +, # 같은거 쓰면 어떻게 핸들러 찾지?
-    const handlers = functions
-      .filter((x) => {
-        const topic_sql = extractTopic(x.iot.sql);
-        return topic === topic_sql;
-      })
-      .map((x) => x.handler);
+    const founds = functions.filter((x) => {
+      const topic_sql = extractTopic(x.iot.sql);
+      return topic === topic_sql;
+    });
 
-    const tasks = handlers.map(async (f) => {
+    const tasks = founds.map(async (entry) => {
+      const { name, handler: f } = entry;
       const awsRequestId = helpers.createUniqueId();
-      const context = helpers.generateLambdaContext(f.name, awsRequestId);
+      const context = helpers.generateLambdaContext(name, awsRequestId);
       await f(event, context, helpers.emptyCallback);
     });
     await Promise.allSettled(tasks);

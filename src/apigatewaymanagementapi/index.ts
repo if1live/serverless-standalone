@@ -1,4 +1,4 @@
-import http from "http";
+import http from "node:http";
 import { WebSocketServer } from "ws";
 import {
   APIGatewayProxyHandler,
@@ -6,11 +6,16 @@ import {
 } from "aws-lambda";
 import { isArrayBuffer } from "node:util/types";
 import type { GetConnectionResponse } from "@aws-sdk/client-apigatewaymanagementapi";
-import { AwsApiHandler, FunctionDefinition } from "../types.js";
+import {
+  AwsApiHandler,
+  FunctionDefinition,
+  FunctionEvent_WebSocket,
+  castFunctionDefinition,
+} from "../types.js";
 import * as helpers from "../helpers.js";
 import { WebSocketEventFactory } from "./events.js";
 
-export const prefix = "/apigatewaymanagementapi/";
+export const prefix = "/@connections/";
 
 type MyWebSocket = WebSocket & {
   connectionId: string;
@@ -22,16 +27,26 @@ function touchSocket(sock: MyWebSocket) {
   sock.lastActiveAt = new Date();
 }
 
+function isEnabledEvent(x: FunctionEvent_WebSocket): boolean {
+  return x.enabled ?? true;
+}
+
 const isConnectFn = (x: FunctionDefinition) => {
-  return x.events.some((x) => x.websocket?.route === "$connect");
+  return x.events.some(
+    (x) => x.websocket?.route === "$connect" && isEnabledEvent(x.websocket),
+  );
 };
 
 const isDisconnectFn = (x: FunctionDefinition) => {
-  return x.events.some((x) => x.websocket?.route === "$disconnect");
+  return x.events.some(
+    (x) => x.websocket?.route === "$disconnect" && isEnabledEvent(x.websocket),
+  );
 };
 
 const isDefaultFn = (x: FunctionDefinition) => {
-  return x.events.some((x) => x.websocket?.route === "$default");
+  return x.events.some(
+    (x) => x.websocket?.route === "$default" && isEnabledEvent(x.websocket),
+  );
 };
 
 const sockets = new Map<string, MyWebSocket>();
@@ -40,17 +55,17 @@ export const execute = async (
   port: number,
   definitions: FunctionDefinition[],
 ) => {
-  const handlers_connect = definitions
+  const definitions_connect = definitions
     .filter(isConnectFn)
-    .map((x) => x.handler as APIGatewayProxyHandler);
+    .map((x) => castFunctionDefinition<APIGatewayProxyHandler>(x));
 
-  const handlers_disconnect = definitions
+  const definitions_disconnect = definitions
     .filter(isDisconnectFn)
-    .map((x) => x.handler as APIGatewayProxyHandler);
+    .map((x) => castFunctionDefinition<APIGatewayProxyHandler>(x));
 
-  const handlers_default = definitions
+  const definitions_default = definitions
     .filter(isDefaultFn)
-    .map((x) => x.handler as APIGatewayProxyWebsocketHandlerV2);
+    .map((x) => castFunctionDefinition<APIGatewayProxyWebsocketHandlerV2>(x));
 
   const wss = new WebSocketServer({ port });
   wss.on("connection", async (ws, req) => {
@@ -76,9 +91,10 @@ export const execute = async (
       });
 
       await Promise.allSettled(
-        handlers_connect.map(async (f) => {
+        definitions_connect.map(async (definition) => {
+          const { handler: f, name } = definition;
           const awsRequestId = helpers.createUniqueId();
-          const context = helpers.generateLambdaContext(f.name, awsRequestId);
+          const context = helpers.generateLambdaContext(name, awsRequestId);
           await f(event as any, context, helpers.emptyCallback);
         }),
       );
@@ -94,9 +110,10 @@ export const execute = async (
       });
 
       await Promise.allSettled(
-        handlers_disconnect.map(async (f) => {
+        definitions_disconnect.map(async (definition) => {
+          const { handler: f, name } = definition;
           const awsRequestId = helpers.createUniqueId();
-          const context = helpers.generateLambdaContext(f.name, awsRequestId);
+          const context = helpers.generateLambdaContext(name, awsRequestId);
           await f(event as any, context, helpers.emptyCallback);
         }),
       );
@@ -127,9 +144,10 @@ export const execute = async (
       });
 
       await Promise.allSettled(
-        handlers_default.map(async (f) => {
+        definitions_default.map(async (definition) => {
+          const { handler: f, name } = definition;
           const awsRequestId = helpers.createUniqueId();
-          const context = helpers.generateLambdaContext(f.name, awsRequestId);
+          const context = helpers.generateLambdaContext(name, awsRequestId);
           await f(event as any, context, helpers.emptyCallback);
         }),
       );
@@ -144,8 +162,8 @@ export const execute = async (
 
 export const handle: AwsApiHandler = async (req, res) => {
   // https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-how-to-call-websocket-api-connections.html
-  // /apigatewaymanagementapi/@connections/<connection_id>
-  const re = /^\/apigatewaymanagementapi\/@connections\/([A-Za-z0-9-+=]+)$/;
+  // /@connections/<connection_id>
+  const re = /^\/@connections\/([A-Za-z0-9-+=]+)$/;
   const m = re.exec(req.url ?? "");
   if (!m) {
     throw new Error("cannot parse url");

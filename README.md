@@ -55,7 +55,7 @@ use aws-sdk locally.
 ```ts
 const client = new ApiGatewayManagementApiClient({
   region: "ap-northeast-1",
-  endpoint: "http://127.0.0.1:9002/apigatewaymanagementapi/",
+  endpoint: "http://127.0.0.1:9002/",
   credentials: {
     accessKeyId: "localAccessKeyId",
     secretAccessKey: "localAecretAccessKey",

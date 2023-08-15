@@ -1,7 +1,10 @@
 import {
   APIGatewayProxyHandler,
   APIGatewayProxyWebsocketHandlerV2,
+  Context,
   IoTHandler,
+  SNSHandler,
+  SQSHandler,
   ScheduledHandler,
 } from "aws-lambda";
 import {
@@ -40,7 +43,7 @@ const websocket_message: APIGatewayProxyWebsocketHandlerV2 = async (
   // echo
   const client = new ApiGatewayManagementApiClient({
     region: "ap-northeast-1",
-    endpoint: "http://127.0.0.1:9002/apigatewaymanagementapi/",
+    endpoint: "http://127.0.0.1:9002/",
     credentials: {
       accessKeyId: "localAccessKeyId",
       secretAccessKey: "localAecretAccessKey",
@@ -67,20 +70,40 @@ const iot_simple: IoTHandler = async (event, context) => {
   console.log("iot_simple", event);
 };
 
+const sqs_simple: SQSHandler = async (event, context) => {
+  console.log("sqs_simple", JSON.stringify(event.Records, null, 2));
+};
+
+const sns_simple: SNSHandler = async (event, context) => {
+  console.log("sns_simple", event);
+};
+
+const lambda_simple = async (
+  event: { [key: string]: unknown },
+  context: Context,
+) => {
+  console.log("lambda_simple", event);
+  return { now: Date.now() };
+};
+
 const definitions: FunctionDefinition[] = [
   {
+    name: "websocket_connect",
     handler: websocket_connect,
     events: [{ websocket: { route: "$connect" } }],
   },
   {
+    name: "websocket_disconnect",
     handler: websocket_disconnect,
     events: [{ websocket: { route: "$disconnect" } }],
   },
   {
+    name: "websocket_message",
     handler: websocket_message,
     events: [{ websocket: { route: "$default" } }],
   },
   {
+    name: "schedule_simple",
     handler: schedule_simple,
     events: [
       {
@@ -93,6 +116,7 @@ const definitions: FunctionDefinition[] = [
     ],
   },
   {
+    name: "iot_simple",
     handler: iot_simple,
     events: [
       {
@@ -101,6 +125,32 @@ const definitions: FunctionDefinition[] = [
         },
       },
     ],
+  },
+  {
+    name: "sqs_simple",
+    handler: sqs_simple,
+    events: [
+      {
+        sqs: {
+          queueName: "hello-queue",
+          batchSize: 2,
+        },
+      },
+    ],
+  },
+  {
+    name: "sns_simple",
+    handler: sns_simple,
+    events: [
+      {
+        sns: { topicName: "hello-topic" },
+      },
+    ],
+  },
+  {
+    name: "lambda_simple",
+    handler: lambda_simple,
+    events: [],
   },
 ];
 
@@ -113,5 +163,6 @@ await StandAlone.start({
   },
   urls: {
     mqtt: "mqtt://artemis:artemis@127.0.0.1:1883",
+    sqs: "http://127.0.0.1:9324",
   },
 });

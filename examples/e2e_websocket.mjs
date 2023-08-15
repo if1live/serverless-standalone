@@ -5,10 +5,17 @@ import {
   GetConnectionCommand,
 } from "@aws-sdk/client-apigatewaymanagementapi";
 
+/**
+ * usage
+ *
+ * 1. wscat -c "ws://127.0.0.1:9001/path?username=me&password=pw"
+ * 2. get connection id
+ * 3. node e2e_websocket.mjs <connection_id>
+ */
+
 const client = new ApiGatewayManagementApiClient({
-  // region이 없으면 작동하지 않는다
   region: "ap-northeast-1",
-  endpoint: "http://127.0.0.1:9002/apigatewaymanagementapi/",
+  endpoint: "http://127.0.0.1:9002/",
   credentials: {
     accessKeyId: "localAccessKeyId",
     secretAccessKey: "localAecretAccessKey",
