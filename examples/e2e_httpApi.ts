@@ -33,6 +33,10 @@ const http_variadic: APIGatewayProxyHandlerV2 = async (event, context) => {
   return execute("http_variadic", event);
 };
 
+const http_mixed: APIGatewayProxyHandlerV2 = async (event, context) => {
+  return execute("http_mixed", event);
+};
+
 export const definitions: FunctionDefinition[] = [
   {
     name: "http_fixed",
@@ -43,6 +47,11 @@ export const definitions: FunctionDefinition[] = [
     name: "http_variadic",
     handler: http_variadic,
     events: [{ httpApi: { route: "ANY /variadic/{proxy+}" } }],
+  },
+  {
+    name: "http_mixed",
+    handler: http_mixed,
+    events: [{ httpApi: { route: "ANY /mixed/{foo}/hello/{bar}/{proxy+}" } }],
   },
   {
     name: "http_exact_get",
@@ -87,6 +96,12 @@ async function main() {
   }
   {
     const url = `${endpoint}/variadic/1/2`;
+    const resp = await fetch(url);
+    const json = await resp.json();
+    console.log(json);
+  }
+  {
+    const url = `${endpoint}/mixed/a/hello/b/hello/world/`;
     const resp = await fetch(url);
     const json = await resp.json();
     console.log(json);
