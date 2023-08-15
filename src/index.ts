@@ -1,6 +1,6 @@
 import http from "node:http";
 import * as helpers from "./helpers.js";
-import * as apigatewaymanagementapi from "./apigatewaymanagementapi/index.js";
+import * as apigateway from "./apigateway/index.js";
 import * as schedule from "./schedule/index.js";
 import * as lambda from "./lambda/index.js";
 import * as iot from "./iot/index.js";
@@ -31,8 +31,8 @@ async function start(params: {
 
   const dispatchApi: http.RequestListener = async (req, res) => {
     try {
-      if (req.url?.startsWith(apigatewaymanagementapi.prefix)) {
-        return apigatewaymanagementapi.handle(req, res);
+      if (req.url?.startsWith(apigateway.websocket.prefix)) {
+        return apigateway.websocket.handle(req, res);
       } else if (req.url?.startsWith(lambda.prefix)) {
         return lambdaMain.handle(req, res);
       } else {
@@ -58,8 +58,8 @@ async function start(params: {
     helpers.replyJson(res, 200, { ok: true });
   };
 
-  const fn_apigatewaymanagementapi = async () => {
-    await apigatewaymanagementapi.execute(ports.websocket, functions);
+  const fn_apigateway_websocket = async () => {
+    await apigateway.websocket.execute(ports.websocket, functions);
   };
 
   const fn_schedule = async () => {
@@ -87,7 +87,7 @@ async function start(params: {
   await Promise.all([
     main_http(ports.http),
     main_api(ports.api),
-    fn_apigatewaymanagementapi(),
+    fn_apigateway_websocket(),
     fn_schedule(),
     fn_iot(),
     fn_sqs(),
