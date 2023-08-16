@@ -152,8 +152,12 @@ export const execute = async (
       // TODO: cookie?
     }
 
-    // TODO: binary?
-    res.end(result.body);
+    if (result.isBase64Encoded && result.body) {
+      const buffer = Buffer.from(result.body, "base64");
+      res.end(buffer);
+    } else {
+      res.end(result.body);
+    }
   };
 
   http.createServer(dispatchHttp).listen(port);
