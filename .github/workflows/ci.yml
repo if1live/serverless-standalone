@@ -10,6 +10,16 @@ jobs:
   main:
     runs-on: ubuntu-latest
 
+    services:
+      activemq:
+        image: apache/activemq-artemis
+        ports:
+          - 1883:1883 # MQTT
+      sqs:
+        image: softwaremill/elasticmq-native:1.4.3
+        ports:
+          - 9324:9324
+
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
