@@ -1,4 +1,5 @@
 import http from "node:http";
+import { createHttpTerminator } from "http-terminator";
 import {
   APIGatewayEventRequestContextV2,
   APIGatewayProxyEventV2,
@@ -9,15 +10,21 @@ import * as R from "remeda";
 import {
   FunctionDefinition,
   HttpMethod,
+  ServiceRunner,
   castFunctionDefinition,
 } from "../types.js";
 import * as helpers from "../helpers.js";
-import { MethodMatcher, PathMatcher } from "./matchers.js";
+import {
+  MethodMatchResult,
+  MethodMatcher,
+  PathMatchResult,
+  PathMatcher,
+} from "./matchers.js";
 
-export const execute = async (
+export const create = (
   port: number,
   definitions: FunctionDefinition[],
-) => {
+): ServiceRunner => {
   // 이벤트 중심으로 생각하려고 이벤트-핸들러를 1:1로 맵핑
   const functions = definitions
     .flatMap((x) => {
@@ -28,7 +35,6 @@ export const execute = async (
         .filter(R.isNot(R.isNil));
 
       return events.map((event) => {
-        // TODO: 문자열 쪼개는걸 컴파일 타임에 검증할수 있나?
         const tokens = event.route.split(" ");
         const method = tokens[0] as HttpMethod;
         const path = tokens[1] as string;
@@ -48,22 +54,14 @@ export const execute = async (
     .sort((a, b) => PathMatcher.compare(a.matcher_path, b.matcher_path));
 
   const dispatchHttp: http.RequestListener = async (req, res) => {
-    const method = req.method ?? "";
-
     // req.url에는 query string 붙어있어서 이를 떼어내는 작업이 필요
     const host = req.headers["host"] ?? "";
     const url = new URL(`http://${host}${req.url}`);
 
-    const rawPath = url.pathname;
-    const rawQueryString = url.search.substring(1, url.search.length);
-
-    const userAgent = req.headers["user-agent"];
-    const sourceIp = helpers.parseIp(req);
-
     const found = functions
       .map((x) => {
-        const match_method = MethodMatcher.match(x.matcher_method, method);
-        const match_path = PathMatcher.match(x.matcher_path, rawPath);
+        const match_method = MethodMatcher.match(x.matcher_method, req.method!);
+        const match_path = PathMatcher.match(x.matcher_path, url.pathname);
 
         return {
           name: x.name,
@@ -80,79 +78,34 @@ export const execute = async (
       return helpers.replyJson(res, 404, json);
     }
 
-    const timeEpoch = new Date();
-    const requestContext: APIGatewayEventRequestContextV2 = {
-      accountId: "123456789012",
-      apiId: "private",
-      domainName: "localhost",
-      domainPrefix: "TODO",
-      http: {
-        method,
-        path: rawPath,
-        protocol: url.protocol.replace(":", ""),
-        sourceIp: sourceIp ?? "1.2.3.4",
-        userAgent: userAgent ?? "",
-      },
-      requestId: helpers.createUniqueId(),
-      routeKey: "TODO",
-      stage: "local",
-      time: timeEpoch.toISOString(),
-      timeEpoch: timeEpoch.getTime(),
-    };
-
-    const bodyBuffer = await helpers.getBody(req);
-    const body =
-      bodyBuffer.byteLength > 0 ? bodyBuffer.toString("utf-8") : undefined;
-    const isBase64Encoded = false;
-
-    const headers = Object.fromEntries(
-      Object.entries(req.headers).map(([key, value]) => {
-        return [key, value?.toString()] as const;
-      }),
-    );
-
-    const queryStringParameters: Record<string, string> = {};
-    for (const key of url.searchParams.keys()) {
-      const value = url.searchParams.getAll(key);
-      queryStringParameters[key] = value.join(",");
-    }
-
-    const pathParameters = found.match_path ?? {};
-
-    // https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html
-    const event: Partial<APIGatewayProxyEventV2> = {
-      version: "2.0",
-      routeKey: "$default",
-      rawPath,
-      rawQueryString,
-      headers,
-      queryStringParameters,
-      pathParameters,
-      body,
-      isBase64Encoded,
-      requestContext,
-    };
+    const event = await createEventV2(req, url, {
+      method: found.match_method!,
+      path: found.match_path!,
+    });
 
     const awsRequestId = helpers.createUniqueId();
     const context = helpers.generateLambdaContext(found.name, awsRequestId);
-    const output = await found.handler(
-      event as APIGatewayProxyEventV2,
-      context,
-      helpers.emptyCallback,
-    );
+    const output = await found.handler(event, context, helpers.emptyCallback);
     const result = output as APIGatewayProxyStructuredResultV2;
 
-    res.statusCode = result.statusCode ?? 200;
+    // https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html
+    const isBase64Encoded = result.isBase64Encoded ?? false;
+    const statusCode = result.statusCode ?? 200;
+
+    res.statusCode = statusCode;
+
+    // TODO: default header?
     if (result.headers) {
       for (const [key, value] of Object.entries(result.headers)) {
         res.setHeader(key, `${value}`);
       }
     }
+
     if (result.cookies) {
       // TODO: cookie?
     }
 
-    if (result.isBase64Encoded && result.body) {
+    if (isBase64Encoded && result.body) {
       const buffer = Buffer.from(result.body, "base64");
       res.end(buffer);
     } else {
@@ -160,5 +113,95 @@ export const execute = async (
     }
   };
 
-  http.createServer(dispatchHttp).listen(port);
+  const server = http.createServer(dispatchHttp);
+  const httpTerminator = createHttpTerminator({ server });
+
+  const start = async () => {
+    return new Promise((resolve) => {
+      server.listen(port, () => {
+        console.log(`listen httpApi: http://127.0.0.1:${port}`);
+        resolve(port);
+      });
+    });
+  };
+
+  const stop = async () => httpTerminator.terminate();
+
+  return {
+    start,
+    stop,
+  };
 };
+
+async function createEventV2(
+  req: http.IncomingMessage,
+  url: URL,
+  match: {
+    method: NonNullable<MethodMatchResult>;
+    path: NonNullable<PathMatchResult>;
+  },
+): Promise<APIGatewayProxyEventV2> {
+  // 매칭되었을때만 진입하니까 nullable로 취급해도 된다
+  const pathParameters = match.path;
+  const method = match.method;
+
+  const rawPath = url.pathname;
+
+  // querystring에서 ? 를 제외해야한다
+  const rawQueryString = url.search.substring(1, url.search.length);
+
+  const bodyBuffer = await helpers.getBody(req);
+  const body =
+    bodyBuffer.byteLength > 0 ? bodyBuffer.toString("utf-8") : undefined;
+
+  const headers = Object.fromEntries(
+    Object.entries(req.headers).map(([key, value]) => {
+      return [key, value?.toString()] as const;
+    }),
+  );
+
+  const queryStringParameters: Record<string, string> = {};
+  for (const key of url.searchParams.keys()) {
+    const value = url.searchParams.getAll(key);
+    queryStringParameters[key] = value.join(",");
+  }
+
+  const userAgent = req.headers["user-agent"];
+  const sourceIp = helpers.parseIp(req);
+
+  const timeEpoch = new Date();
+  const requestContext: APIGatewayEventRequestContextV2 = {
+    accountId: "123456789012",
+    apiId: "private",
+    domainName: "localhost",
+    domainPrefix: "TODO",
+    http: {
+      method,
+      path: rawPath,
+      protocol: url.protocol.replace(":", ""),
+      sourceIp: sourceIp ?? "1.2.3.4",
+      userAgent: userAgent ?? "",
+    },
+    requestId: helpers.createUniqueId(),
+    routeKey: "TODO",
+    stage: "local",
+    time: timeEpoch.toISOString(),
+    timeEpoch: timeEpoch.getTime(),
+  };
+
+  // https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html
+  const event: APIGatewayProxyEventV2 = {
+    version: "2.0",
+    routeKey: "$default",
+    rawPath,
+    rawQueryString,
+    headers,
+    queryStringParameters,
+    pathParameters,
+    body,
+    isBase64Encoded: false,
+    requestContext,
+  };
+
+  return event;
+}

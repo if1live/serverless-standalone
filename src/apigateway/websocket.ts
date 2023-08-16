@@ -1,4 +1,5 @@
 import http from "node:http";
+import { createHttpTerminator } from "http-terminator";
 import { WebSocketServer } from "ws";
 import {
   APIGatewayProxyHandler,
@@ -10,6 +11,7 @@ import {
   AwsApiHandler,
   FunctionDefinition,
   FunctionEvent_WebSocket,
+  ServiceRunner,
   castFunctionDefinition,
 } from "../types.js";
 import * as helpers from "../helpers.js";
@@ -51,10 +53,10 @@ const isDefaultFn = (x: FunctionDefinition) => {
 
 const sockets = new Map<string, MyWebSocket>();
 
-export const execute = async (
+export const create = (
   port: number,
   definitions: FunctionDefinition[],
-) => {
+): ServiceRunner => {
   const definitions_connect = definitions
     .filter(isConnectFn)
     .map((x) => castFunctionDefinition<APIGatewayProxyHandler>(x));
@@ -87,6 +89,7 @@ export const execute = async (
 
   const server = http.createServer(dispatchApi);
   const wss = new WebSocketServer({ server });
+  const httpTerminator = createHttpTerminator({ server });
 
   wss.on("connection", async (ws, req) => {
     const connectedAt = new Date();
@@ -180,7 +183,21 @@ export const execute = async (
     ws.on("error", console.error);
   });
 
-  server.listen(port);
+  const start = async () => {
+    return new Promise((resolve) => {
+      server.listen(port, () => {
+        console.log(`listen websocket: ws://127.0.0.1:${port}`);
+        resolve(port);
+      });
+    });
+  };
+
+  const stop = async () => httpTerminator.terminate();
+
+  return {
+    start,
+    stop,
+  };
 };
 
 export const handle: AwsApiHandler = async (req, res) => {

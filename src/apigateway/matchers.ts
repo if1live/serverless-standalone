@@ -29,12 +29,17 @@ const method_build = (method: HttpMethod): MethodMatcher => {
   }
 };
 
-const method_match = (self: MethodMatcher, method: string): boolean => {
+export type MethodMatchResult = string | null;
+
+const method_match = (
+  self: MethodMatcher,
+  method: string,
+): MethodMatchResult => {
   switch (self._tag) {
     case "any":
-      return true;
+      return method;
     case "exact":
-      return self.method === method;
+      return self.method === method ? method : null;
   }
 };
 
@@ -113,7 +118,8 @@ const path_build_node = (path: string): PathMatcher_Node => {
   };
 };
 
-type PathMatchResult = { [key: string]: string } | null;
+export type PathMatchResult = { [key: string]: string } | null;
+
 const path_match = (self: PathMatcher, path: string): PathMatchResult => {
   switch (self._tag) {
     case "exact":
@@ -203,18 +209,36 @@ const path_toSorted = (list: PathMatcher[]): PathMatcher[] => {
 };
 
 const path_compare = (a: PathMatcher, b: PathMatcher) => {
-  const calculate_prior = (m: PathMatcher) => {
-    if (m._tag === "exact") {
-      return 1;
-    } else {
-      const hasVariadic = m.nodes.some((x) => x._tag === "variadic_argument");
-      return hasVariadic ? 3 : 2;
+  const calculate_prior = (m: PathMatcher): number => {
+    switch (m._tag) {
+      case "exact":
+        return 1;
+      case "node":
+        const hasVariadic = m.nodes.some((x) => x._tag === "variadic_argument");
+        return hasVariadic ? 3 : 2;
     }
   };
 
+  const calculate_length = (m: PathMatcher): number => {
+    switch (m._tag) {
+      case "exact":
+        return m.path.length;
+      case "node":
+        return m.nodes.length;
+    }
+  };
+
+  // 우선순위 낮을수록 점수 높음
   const prior_a = calculate_prior(a);
   const prior_b = calculate_prior(b);
-  return prior_a - prior_b;
+  if (prior_a !== prior_b) {
+    return prior_a - prior_b;
+  }
+
+  // 길이가 길수록 점수 높음
+  const len_a = calculate_length(a);
+  const len_b = calculate_length(b);
+  return len_b - len_a;
 };
 
 export const PathMatcher = {

@@ -1,11 +1,16 @@
-import * as apigateway from "./apigateway/index.js";
+import { httpApi, websocket } from "./apigateway/index.js";
 import * as schedule from "./schedule/index.js";
 import * as lambda from "./lambda/index.js";
 import * as iot from "./iot/index.js";
 import * as sqs from "./sqs/index.js";
-import { FunctionDefinition } from "./types.js";
+import { FunctionDefinition, ServiceRunner } from "./types.js";
 
-async function start(params: {
+const mock: ServiceRunner = {
+  start() {},
+  stop() {},
+};
+
+export function standalone(params: {
   functions: FunctionDefinition[];
   ports: {
     http: number;
@@ -19,58 +24,32 @@ async function start(params: {
 }) {
   const { functions, ports, urls } = params;
 
-  const fn_lambda = async (port: number) => {
-    // TODO: 람다 함수 하나도 없을떄만 건너뛰기
-    if (true) {
-      await lambda.execute(port, functions);
-    }
+  // TODO: 핸들러 없으면 건너뛰도록
+  const inst_httpApi = httpApi.create(ports.http, functions);
+  const inst_webscoket = websocket.create(ports.websocket, functions);
+  const inst_lambda = lambda.create(ports.lambda, functions);
+  const inst_schedule = schedule.create(functions);
+  const inst_sqs = urls.sqs ? sqs.create(urls.sqs, functions) : mock;
+  const inst_iot = urls.mqtt ? iot.create(urls.mqtt, functions) : mock;
+
+  const items: ServiceRunner[] = [
+    inst_httpApi,
+    inst_webscoket,
+    inst_lambda,
+    inst_schedule,
+    inst_sqs,
+    inst_iot,
+  ];
+
+  const start = async () => {
+    await Promise.all(items.map((x) => x.start()));
   };
 
-  const fn_apigateway_httpApi = async (port: number) => {
-    // TODO: 핸들러 없으면 건너뛰도록
-    if (true) {
-      await apigateway.httpApi.execute(port, functions);
-    }
+  const stop = async () => {
+    await Promise.all(items.map((x) => x.stop()));
   };
 
-  const fn_apigateway_websocket = async (port: number) => {
-    // TODO:  핸들러 없으면 건너뛰도록
-    if (true) {
-      await apigateway.websocket.execute(port, functions);
-    }
-  };
-
-  const fn_schedule = async () => {
-    // TODO:  핸들러 없으면 건너뛰도록
-    if (true) {
-      await schedule.execute(functions);
-    }
-  };
-
-  const fn_iot = async () => {
-    if (urls.mqtt) {
-      await iot.execute(urls.mqtt, functions);
-    }
-  };
-
-  const fn_sqs = async () => {
-    if (urls.sqs) {
-      await sqs.execute(urls.sqs, functions);
-    }
-  };
-
-  await Promise.all([
-    fn_lambda(ports.lambda),
-    fn_apigateway_httpApi(ports.http),
-    fn_apigateway_websocket(ports.websocket),
-    fn_schedule(),
-    fn_iot(),
-    fn_sqs(),
-  ]);
+  return { start, stop };
 }
-
-export const StandAlone = {
-  start,
-};
 
 export * from "./types.js";

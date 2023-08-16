@@ -5,10 +5,11 @@ import * as helpers from "../helpers.js";
 import {
   FunctionDefinition,
   FunctionEvent_Schedule,
+  ServiceRunner,
   castFunctionDefinition,
 } from "../types.js";
 
-export const execute = async (definitions: FunctionDefinition[]) => {
+export const create = (definitions: FunctionDefinition[]): ServiceRunner => {
   const functions = definitions.flatMap((definition0) => {
     const definition = castFunctionDefinition<ScheduledHandler>(definition0);
     const events = definition.events
@@ -32,9 +33,22 @@ export const execute = async (definitions: FunctionDefinition[]) => {
     });
   });
 
-  for (const job of jobs) {
-    job.start();
-  }
+  const start = () => {
+    for (const job of jobs) {
+      job.start();
+    }
+  };
+
+  const stop = () => {
+    for (const job of jobs) {
+      job.stop();
+    }
+  };
+
+  return {
+    start,
+    stop,
+  };
 };
 
 // https://docs.aws.amazon.com/ko_kr/AmazonCloudWatch/latest/events/RunLambdaSchedule.html

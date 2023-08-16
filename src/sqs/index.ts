@@ -19,6 +19,7 @@ import {
 import {
   FunctionDefinition,
   FunctionEvent_SQS,
+  ServiceRunner,
   castFunctionDefinition,
 } from "../types.js";
 import * as helpers from "../helpers.js";
@@ -30,12 +31,14 @@ interface Element {
   event: FunctionEvent_SQS;
 }
 
+let running = true;
+
 // serverless-offline-sqs 참고
 // https://github.com/CoorpAcademy/serverless-plugins/blob/master/packages/serverless-offline-sqs/src/sqs.js
-export const execute = async (
+export const create = (
   url: string,
   definitions: FunctionDefinition[],
-) => {
+): ServiceRunner => {
   const client = new SQSClient({
     region: "ap-northeast-1",
     endpoint: url,
@@ -68,26 +71,37 @@ export const execute = async (
     })
     .filter(R.isNonNull);
 
-  // queue 만들기. queue 생성하면 queue url 얻을수 있다
-  // 빠른 기동을 위해 얻은 queue url을 재사용
-  // elasticmq: http://localhost:9324/000000000000/hello-queue
-  const commands_create = functions.map((x) => {
-    return new CreateQueueCommand({
-      QueueName: x.event.queueName,
+  const start = async () => {
+    // queue 만들기. queue 생성하면 queue url 얻을수 있다
+    // 빠른 기동을 위해 얻은 queue url을 재사용
+    // elasticmq: http://localhost:9324/000000000000/hello-queue
+    const commands_create = functions.map((x) => {
+      return new CreateQueueCommand({
+        QueueName: x.event.queueName,
+      });
     });
-  });
-  const outputs_create = await Promise.all(
-    commands_create.map(async (c) => client.send(c)),
-  );
-  const queueUrls = outputs_create.map((x) => x.QueueUrl ?? "");
-  const elements = R.zip(functions, queueUrls).map((x): Element => {
-    const [definition, queueUrl] = x;
-    return { ...definition, queueUrl };
-  });
+    const outputs_create = await Promise.all(
+      commands_create.map(async (c) => client.send(c)),
+    );
+    const queueUrls = outputs_create.map((x) => x.QueueUrl ?? "");
+    const elements = R.zip(functions, queueUrls).map((x): Element => {
+      const [definition, queueUrl] = x;
+      return { ...definition, queueUrl };
+    });
 
-  await Promise.all(
-    elements.map(async (element) => startLoop(client, element)),
-  );
+    await Promise.all(
+      elements.map(async (element) => startLoop(client, element)),
+    );
+  };
+
+  const stop = () => {
+    running = false;
+  };
+
+  return {
+    start,
+    stop,
+  };
 };
 
 const startLoop = async (client: SQSClient, definition: Element) => {
@@ -142,7 +156,7 @@ const startLoop = async (client: SQSClient, definition: Element) => {
   const { handler: f } = definition;
   const batchSize = definition.event.batchSize ?? 10;
 
-  while (true) {
+  while (running) {
     const messages = await getMessages(batchSize, []);
     if (messages.length > 0) {
       try {

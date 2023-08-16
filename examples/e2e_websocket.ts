@@ -1,4 +1,8 @@
 import url from "node:url";
+import { after, before, describe, it } from "node:test";
+import assert from "node:assert";
+import { WebSocket } from "ws";
+import { setTimeout as delay } from "node:timers/promises";
 import {
   APIGatewayProxyHandler,
   APIGatewayProxyWebsocketHandlerV2,
@@ -9,29 +13,36 @@ import {
   DeleteConnectionCommand,
   GetConnectionCommand,
 } from "@aws-sdk/client-apigatewaymanagementapi";
-import type { FunctionDefinition } from "../src/index.js";
+import { standalone, type FunctionDefinition } from "../src/index.js";
 
-/**
- * usage
- *
- * 1. wscat -c "ws://127.0.0.1:9001/path?username=me&password=pw"
- * 2. get connection id
- * 3. node e2e_websocket.mjs <connection_id>
- */
+const client = new ApiGatewayManagementApiClient({
+  region: "ap-northeast-1",
+  endpoint: "http://127.0.0.1:9001/",
+  credentials: {
+    accessKeyId: "localAccessKeyId",
+    secretAccessKey: "localAecretAccessKey",
+  },
+});
+
+let g_connectionId: string | null = null;
 
 const websocket_connect: APIGatewayProxyHandler = async (event, context) => {
-  const connectionId = event.requestContext.connectionId;
+  const connectionId = event.requestContext.connectionId!;
   console.log("connect", {
     connectionId,
     queryStringParameters: event.queryStringParameters,
     multiValueQueryStringParameters: event.multiValueQueryStringParameters,
   });
+
+  g_connectionId = connectionId;
   return { statusCode: 200, body: "OK" };
 };
 
 const websocket_disconnect: APIGatewayProxyHandler = async (event, context) => {
   const connectionId = event.requestContext.connectionId;
   console.log("disconnect", { connectionId });
+
+  g_connectionId = null;
   return { statusCode: 200, body: "OK" };
 };
 
@@ -47,14 +58,6 @@ const websocket_message: APIGatewayProxyWebsocketHandlerV2 = async (
   });
 
   // echo
-  const client = new ApiGatewayManagementApiClient({
-    region: "ap-northeast-1",
-    endpoint: "http://127.0.0.1:9001/",
-    credentials: {
-      accessKeyId: "localAccessKeyId",
-      secretAccessKey: "localAecretAccessKey",
-    },
-  });
   await client.send(
     new PostToConnectionCommand({
       ConnectionId: connectionId,
@@ -84,61 +87,97 @@ export const definitions: FunctionDefinition[] = [
 ];
 
 async function main() {
-  const client = new ApiGatewayManagementApiClient({
-    region: "ap-northeast-1",
-    endpoint: "http://127.0.0.1:9001/",
-    credentials: {
-      accessKeyId: "localAccessKeyId",
-      secretAccessKey: "localAecretAccessKey",
+  const inst = standalone({
+    functions: definitions,
+    ports: {
+      http: 9000,
+      websocket: 9001,
+      lambda: 9002,
     },
+    urls: {},
   });
 
-  const connectionId = process.argv[process.argv.length - 1];
-  console.log("connectionId", connectionId);
+  describe("websocket", () => {
+    before(async () => inst.start());
+    after(async () => inst.stop());
 
-  {
-    // text message
-    const output = await client.send(
-      new PostToConnectionCommand({
-        ConnectionId: connectionId,
-        Data: new TextEncoder().encode("hello"),
-      }),
-    );
-    console.log("PostToConnection: string", output);
-  }
+    let ws: WebSocket;
+    it("open", async () => {
+      ws = new WebSocket("ws://127.0.0.1:9001");
 
-  {
-    // binary message
-    const data = new Uint8Array(2);
-    data[0] = 0x12;
-    data[1] = 0x34;
+      ws.onopen = (evt) => console.log("open");
 
-    const output = await client.send(
-      new PostToConnectionCommand({
-        ConnectionId: connectionId,
-        Data: data,
-      }),
-    );
-    console.log("PostToConnection: string", output);
-  }
+      ws.onclose = (evt) =>
+        console.log("close", {
+          code: evt.code,
+          reason: evt.reason,
+          wasClean: evt.wasClean,
+        });
 
-  {
-    const output = await client.send(
-      new GetConnectionCommand({
-        ConnectionId: connectionId,
-      }),
-    );
-    console.log("GetConnection", output);
-  }
+      ws.onerror = (evt) =>
+        console.log("error", {
+          message: evt.message,
+          error: evt.error,
+        });
 
-  {
-    const output = await client.send(
-      new DeleteConnectionCommand({
-        ConnectionId: connectionId,
-      }),
-    );
-    console.log("DeleteConnection", output);
-  }
+      ws.onmessage = (evt) => {
+        if (Buffer.isBuffer(evt.data)) {
+          const text = evt.data.toString("utf-8");
+          console.log("message", text);
+        } else {
+          console.log("message", evt.data);
+        }
+      };
+
+      // 커넥션 붙을떄까지 대기
+      for (let i = 0; i < 10; i++) {
+        if (g_connectionId) {
+          break;
+        }
+        await delay(100);
+      }
+    });
+
+    it("PostToConnection: string", async () => {
+      const output = await client.send(
+        new PostToConnectionCommand({
+          ConnectionId: g_connectionId!,
+          Data: new TextEncoder().encode("hello"),
+        }),
+      );
+    });
+
+    it("PostToConnection: binary", async () => {
+      const data = new Uint8Array(2);
+      data[0] = 0x12;
+      data[1] = 0x34;
+
+      const output = await client.send(
+        new PostToConnectionCommand({
+          ConnectionId: g_connectionId!,
+          Data: data,
+        }),
+      );
+    });
+
+    it("GetConnection", async () => {
+      const output = await client.send(
+        new GetConnectionCommand({
+          ConnectionId: g_connectionId!,
+        }),
+      );
+      assert.equal(output.ConnectedAt instanceof Date, true);
+      assert.equal(output.LastActiveAt instanceof Date, true);
+    });
+
+    it("DeleteConnection", async () => {
+      const output = await client.send(
+        new DeleteConnectionCommand({
+          ConnectionId: g_connectionId!,
+        }),
+      );
+    });
+  });
 }
 
 // https://2ality.com/2022/07/nodejs-esm-main.html

@@ -34,6 +34,7 @@
   "dependencies": {
     "@aws-sdk/client-sqs": "~3.188.0",
     "cron": "^2.4.1",
+    "http-terminator": "^3.2.0",
     "mqtt": "^5.0.2",
     "remeda": "^1.24.1",
     "ws": "^8.13.0"

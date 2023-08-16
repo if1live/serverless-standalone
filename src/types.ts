@@ -89,3 +89,8 @@ export const castFunctionDefinition = <T>(x: FunctionDefinition) => {
     handler: x.handler as T,
   };
 };
+
+export interface ServiceRunner {
+  start(): Promise<unknown> | unknown;
+  stop(): Promise<unknown> | unknown;
+}

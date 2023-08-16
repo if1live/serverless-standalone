@@ -1,4 +1,4 @@
-import { StandAlone, FunctionDefinition } from "../src/index.js";
+import { standalone, FunctionDefinition } from "../src/index.js";
 import { definitions as definitions_httpApi } from "./e2e_httpApi.js";
 import { definitions as definitions_websocket } from "./e2e_websocket.js";
 import { definitions as definitions_lambda } from "./e2e_lambda.js";
@@ -21,7 +21,7 @@ const definitions: FunctionDefinition[] = [
   ...definitions_iot,
 ];
 
-await StandAlone.start({
+const inst = standalone({
   functions: definitions,
   ports: {
     http: 9000,
@@ -33,3 +33,4 @@ await StandAlone.start({
     sqs: url_sqs,
   },
 });
+await inst.start();

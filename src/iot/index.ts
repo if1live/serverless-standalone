@@ -1,13 +1,17 @@
 import { IoTHandler } from "aws-lambda";
 import mqtt from "mqtt";
 import * as R from "remeda";
-import { FunctionDefinition, castFunctionDefinition } from "../types.js";
+import {
+  FunctionDefinition,
+  ServiceRunner,
+  castFunctionDefinition,
+} from "../types.js";
 import * as helpers from "../helpers.js";
 
-export const execute = async (
+export const create = (
   url: string,
   definitions: FunctionDefinition[],
-) => {
+): ServiceRunner => {
   const functions = definitions.flatMap((x) => {
     const definition = castFunctionDefinition<IoTHandler>(x);
 
@@ -22,45 +26,53 @@ export const execute = async (
     }));
   });
 
-  const client = mqtt.connect(url);
+  let client: mqtt.MqttClient;
 
-  client.on("connect", async (packet) => {
-    const topics = functions
-      .map((x) => x.iot.sql)
-      .map((sql) => extractTopic(sql))
-      .filter(R.isNonNull);
+  const start = () => {
+    const client = mqtt.connect(url);
 
-    if (topics.length > 0) {
-      await client.subscribeAsync(topics);
-    }
-  });
+    client.on("connect", async (packet) => {
+      const topics = functions
+        .map((x) => x.iot.sql)
+        .map((sql) => extractTopic(sql))
+        .filter(R.isNonNull);
 
-  client.on("error", (e) => {
-    console.error("error", e);
-  });
-
-  client.on("reconnect", () => {
-    console.error("reconnect");
-  });
-
-  client.on("message", async (topic, payload, packet) => {
-    const event = payload.toString("utf-8");
-
-    // TODO: handler mapping? topic에 맞는 핸들러만 찾기
-    // TODO: +, # 같은거 쓰면 어떻게 핸들러 찾지?
-    const founds = functions.filter((x) => {
-      const topic_sql = extractTopic(x.iot.sql);
-      return topic === topic_sql;
+      if (topics.length > 0) {
+        await client.subscribeAsync(topics);
+      }
     });
 
-    const tasks = founds.map(async (entry) => {
-      const { name, handler: f } = entry;
-      const awsRequestId = helpers.createUniqueId();
-      const context = helpers.generateLambdaContext(name, awsRequestId);
-      await f(event, context, helpers.emptyCallback);
+    client.on("error", (e) => {
+      console.error("error", e);
     });
-    await Promise.allSettled(tasks);
-  });
+
+    client.on("reconnect", () => {
+      console.error("reconnect");
+    });
+
+    client.on("message", async (topic, payload, packet) => {
+      const event = payload.toString("utf-8");
+
+      // TODO: handler mapping? topic에 맞는 핸들러만 찾기
+      // TODO: +, # 같은거 쓰면 어떻게 핸들러 찾지?
+      const founds = functions.filter((x) => {
+        const topic_sql = extractTopic(x.iot.sql);
+        return topic === topic_sql;
+      });
+
+      const tasks = founds.map(async (entry) => {
+        const { name, handler: f } = entry;
+        const awsRequestId = helpers.createUniqueId();
+        const context = helpers.generateLambdaContext(name, awsRequestId);
+        await f(event, context, helpers.emptyCallback);
+      });
+      await Promise.allSettled(tasks);
+    });
+  };
+
+  const stop = async () => client.endAsync(true);
+
+  return { start, stop };
 };
 
 function extractTopic(sql: string): string | null {

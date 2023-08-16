@@ -1,13 +1,15 @@
 import http from "node:http";
-import { FunctionDefinition, UnknownHandler } from "../types.js";
+import { createHttpTerminator } from "http-terminator";
+import { FunctionDefinition, ServiceRunner, UnknownHandler } from "../types.js";
 import * as helpers from "../helpers.js";
+import { InvocationType } from "@aws-sdk/client-lambda";
 
 export const prefix = "/2015-03-31/functions/";
 
-export const execute = async (
+export const create = (
   port: number,
   definitions: FunctionDefinition[],
-) => {
+): ServiceRunner => {
   const handle: http.RequestListener = async (req, res) => {
     const parsed = parseRequest(req);
     if (parsed._tag === "invoke") {
@@ -24,8 +26,20 @@ export const execute = async (
       const awsRequestId = helpers.createUniqueId();
       const context = helpers.generateLambdaContext(found.name, awsRequestId);
       const f = found.handler as UnknownHandler;
-      const output = await f(event, context);
-      return helpers.replyJson(res, 200, output);
+
+      const invocationType = req.headers["x-amz-invocation-type"];
+      if (invocationType === InvocationType.RequestResponse) {
+        const output = await f(event, context);
+        return helpers.replyJson(res, 200, output);
+      } else if (invocationType === InvocationType.Event) {
+        f(event, context).then();
+        return helpers.replyJson(res, 200, {});
+      } else {
+        const resp = {
+          message: `not supported invocationType: ${invocationType}`,
+        };
+        return helpers.replyJson(res, 400, resp);
+      }
     } else {
       throw new Error("cannot perform");
     }
@@ -48,7 +62,25 @@ export const execute = async (
       helpers.replyJson(res, status, data);
     }
   };
-  http.createServer(dispatchApi).listen(port);
+
+  const server = http.createServer(dispatchApi);
+  const httpTerminator = createHttpTerminator({ server });
+
+  const start = async () => {
+    return new Promise((resolve) => {
+      server.listen(port, () => {
+        console.log(`listen lambda: http://127.0.0.1:${port}`);
+        resolve(port);
+      });
+    });
+  };
+
+  const stop = async () => httpTerminator.terminate();
+
+  return {
+    start,
+    stop,
+  };
 };
 
 /** POST /2015-03-31/functions/lambda_simple/invocations */

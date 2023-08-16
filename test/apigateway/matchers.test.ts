@@ -12,8 +12,8 @@ describe("MethodMatcher", () => {
     const matcher = MethodMatcher.build("ANY");
 
     it("match", () => {
-      assert.equal(MethodMatcher.match(matcher, "GET"), true);
-      assert.equal(MethodMatcher.match(matcher, "POST"), true);
+      assert.equal(MethodMatcher.match(matcher, "GET"), "GET");
+      assert.equal(MethodMatcher.match(matcher, "POST"), "POST");
     });
   });
 
@@ -21,11 +21,11 @@ describe("MethodMatcher", () => {
     const matcher = MethodMatcher.build("GET");
 
     it("match", () => {
-      assert.equal(MethodMatcher.match(matcher, "GET"), true);
+      assert.equal(MethodMatcher.match(matcher, "GET"), "GET");
     });
 
     it("not match", () => {
-      assert.equal(MethodMatcher.match(matcher, "POST"), false);
+      assert.equal(MethodMatcher.match(matcher, "POST"), null);
     });
   });
 });
@@ -67,41 +67,57 @@ describe("PathMatcher#match", () => {
 });
 
 describe("PathMatcher#sort", () => {
-  // GET /pets/dog/1
-  const m_exact: PathMatcher_Exact = {
-    _tag: "exact",
-    path: "/pets/dog/1",
-  };
+  describe("by tag", () => {
+    // GET /pets/dog/1
+    const m_exact: PathMatcher_Exact = {
+      _tag: "exact",
+      path: "/pets/dog/1",
+    };
 
-  // GET /pets/dog/{id}
-  const m_fixed: PathMatcher_Node = {
-    _tag: "node",
-    nodes: [
-      { _tag: "slash" },
-      { _tag: "constant", value: "pets" },
-      { _tag: "slash" },
-      { _tag: "constant", value: "dogs" },
-      { _tag: "fixed_argument", identifier: "id" },
-    ],
-  };
+    // GET /pets/dog/{id}
+    const m_fixed: PathMatcher_Node = {
+      _tag: "node",
+      nodes: [
+        { _tag: "slash" },
+        { _tag: "constant", value: "pets" },
+        { _tag: "slash" },
+        { _tag: "constant", value: "dogs" },
+        { _tag: "fixed_argument", identifier: "id" },
+      ],
+    };
 
-  // GET /pets/{proxy+}
-  const m_variadic: PathMatcher_Node = {
-    _tag: "node",
-    nodes: [
-      { _tag: "slash" },
-      { _tag: "constant", value: "pets" },
-      { _tag: "slash" },
-      { _tag: "variadic_argument", identifier: "proxy" },
-    ],
-  };
+    // GET /pets/{proxy+}
+    const m_variadic: PathMatcher_Node = {
+      _tag: "node",
+      nodes: [
+        { _tag: "slash" },
+        { _tag: "constant", value: "pets" },
+        { _tag: "slash" },
+        { _tag: "variadic_argument", identifier: "proxy" },
+      ],
+    };
 
-  const matchers = R.shuffle([m_exact, m_fixed, m_variadic]);
+    const matchers = R.shuffle([m_exact, m_fixed, m_variadic]);
 
-  it("sort", () => {
-    const sortedList = PathMatcher.toSorted(matchers);
-    assert.deepEqual(sortedList[0], m_exact);
-    assert.deepEqual(sortedList[1], m_fixed);
-    assert.deepEqual(sortedList[2], m_variadic);
+    it("sort", () => {
+      const sortedList = PathMatcher.toSorted(matchers);
+      assert.deepEqual(sortedList[0], m_exact);
+      assert.deepEqual(sortedList[1], m_fixed);
+      assert.deepEqual(sortedList[2], m_variadic);
+    });
+  });
+
+  describe("by length", () => {
+    const m_a: PathMatcher_Exact = { _tag: "exact", path: "/1" };
+    const m_b: PathMatcher_Exact = { _tag: "exact", path: "/1/2" };
+    const m_c: PathMatcher_Exact = { _tag: "exact", path: "/1/2/3" };
+    const matchers = R.shuffle([m_a, m_b, m_c]);
+
+    it("sort", () => {
+      const sortedList = PathMatcher.toSorted(matchers);
+      assert.deepEqual(sortedList[0], m_c);
+      assert.deepEqual(sortedList[1], m_b);
+      assert.deepEqual(sortedList[2], m_a);
+    });
   });
 });
