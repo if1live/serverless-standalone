@@ -57,10 +57,17 @@ jobs:
       - name: test
         run: pnpm test
 
-      - name: e2e
-        run: |
-          pnpm tsx ./examples/e2e_httpApi.ts
-          pnpm tsx ./examples/e2e_websocket.ts
-          pnpm tsx ./examples/e2e_lambda.ts
-          pnpm tsx ./examples/e2e_schedule.ts
-          pnpm tsx ./examples/e2e_sqs.ts
+      - name: e2e_httpApi
+        run: pnpm tsx ./examples/e2e_httpApi.ts
+
+      - name: e2e_websocket
+        run: pnpm tsx ./examples/e2e_websocket.ts
+
+      - name: e2e_lambda
+        run: pnpm tsx ./examples/e2e_lambda.ts
+
+      - name: e2e_schedule
+        run: pnpm tsx ./examples/e2e_schedule.ts
+
+      - name: e2e_sqs
+        run: pnpm tsx ./examples/e2e_sqs.ts
