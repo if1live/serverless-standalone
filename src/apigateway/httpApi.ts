@@ -89,7 +89,7 @@ export const execute = async (
       http: {
         method,
         path: rawPath,
-        protocol: url.protocol,
+        protocol: url.protocol.replace(":", ""),
         sourceIp: sourceIp ?? "1.2.3.4",
         userAgent: userAgent ?? "",
       },
