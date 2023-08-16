@@ -89,12 +89,14 @@ export const create = (
       return { ...definition, queueUrl };
     });
 
-    await Promise.all(
-      elements.map(async (element) => startLoop(client, element)),
-    );
+    // promise를 만들고 잡지 않는 이유
+    // 각각의 작업은 무한루프라서 await하면 다음으로 진행되지 않는다
+    const promises = elements.map(async (elem) => startLoop(client, elem));
   };
 
   const stop = () => {
+    // TODO: abort signal 쓰는게 더 올바른 방법일듯?
+    // aws-sdk 즉시 멈추려면 running 플래그로는 답이 없다
     running = false;
   };
 
@@ -111,6 +113,11 @@ const startLoop = async (client: SQSClient, definition: Element) => {
     size: number,
     messages: Message[],
   ): Promise<Message[]> => {
+    // 정지 플래그 사용된 경우
+    if (!running) {
+      return messages;
+    }
+
     if (size <= 0) {
       return messages;
     }

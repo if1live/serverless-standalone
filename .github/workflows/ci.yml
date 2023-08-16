@@ -63,3 +63,4 @@ jobs:
           pnpm tsx ./examples/e2e_websocket.ts
           pnpm tsx ./examples/e2e_lambda.ts
           pnpm tsx ./examples/e2e_schedule.ts
+          pnpm tsx ./examples/e2e_sqs.ts
