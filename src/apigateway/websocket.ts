@@ -105,6 +105,7 @@ export const execute = async (
       const event = WebSocketEventFactory.disconnect({
         connectedAt,
         connectionId,
+        port,
         statusCode: 1005,
         reason: "",
       });

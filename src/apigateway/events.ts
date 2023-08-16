@@ -120,14 +120,17 @@ export function connect(params: {
     multiValueQueryStringParameters[key] = searchParams.getAll(key);
   }
 
+  const port = params.port;
+  const hostname = "127.0.0.1";
+
   const headers = {
-    Host: "localhost",
+    Host: `${hostname}:${port}`,
     "Sec-WebSocket-Extensions": "permessage-deflate; client_max_window_bits",
     "Sec-WebSocket-Key": helpers.createUniqueId(),
     "Sec-WebSocket-Version": "13",
     "X-Amzn-Trace-Id": `Root=${helpers.createUniqueId()}`,
-    "X-Forwarded-For": "127.0.0.1",
-    "X-Forwarded-Port": `${params.port}`,
+    "X-Forwarded-For": hostname,
+    "X-Forwarded-Port": `${port}`,
     "X-Forwarded-Proto": "http",
   };
   const multiValueHeaders = transform_multiValueHeaders(headers);
@@ -147,11 +150,15 @@ export function connect(params: {
 function disconnect(params: {
   connectionId: string;
   connectedAt: Date;
+  port: number;
   statusCode: number;
   reason: string;
 }) {
+  const port = params.port;
+  const hostname = "127.0.0.1";
+
   const headers = {
-    Host: "localhost",
+    Host: `${hostname}:${port}`,
     "x-api-key": "",
     "X-Forwarded-For": "",
     "x-restapi": "",
