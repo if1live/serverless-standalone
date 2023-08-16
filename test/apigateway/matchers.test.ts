@@ -53,18 +53,15 @@ describe("PathMatcher#match", () => {
 
   describe("variadic argument", () => {
     const matcher = PathMatcher.build("/pets/{proxy+}");
+    const match = (input: string) => PathMatcher.match(matcher, input);
 
     it("match", () => {
-      assert.deepEqual(PathMatcher.match(matcher, "/pets/"), null);
-      assert.deepEqual(PathMatcher.match(matcher, "/pets/dog/"), {
-        proxy: "dog/",
-      });
-      assert.deepEqual(PathMatcher.match(matcher, "/pets/dog/1"), {
-        proxy: "dog/1",
-      });
-      assert.deepEqual(PathMatcher.match(matcher, "/pets/dog/1/"), {
-        proxy: "dog/1/",
-      });
+      assert.deepEqual(match("/pets"), null);
+      assert.deepEqual(match("/pets/"), { proxy: "" });
+      assert.deepEqual(match("/pets/dog"), { proxy: "dog" });
+      assert.deepEqual(match("/pets/dog/"), { proxy: "dog/" });
+      assert.deepEqual(match("/pets/dog/1"), { proxy: "dog/1" });
+      assert.deepEqual(match("/pets/dog/1/"), { proxy: "dog/1/" });
     });
   });
 });

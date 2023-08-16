@@ -184,12 +184,7 @@ const path_match_node = (
         })
         .filter(R.isNonNull);
       const rest = tokens.join("");
-
-      if (rest) {
-        result[node_matcher.identifier] = rest;
-      } else {
-        return null;
-      }
+      result[node_matcher.identifier] = rest;
     } else {
       node_matcher satisfies never;
     }
