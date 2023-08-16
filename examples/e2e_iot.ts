@@ -1,5 +1,4 @@
 import mqtt from "mqtt";
-import url from "node:url";
 import { before, after, describe, it } from "node:test";
 import assert from "node:assert";
 import { setTimeout as delay } from "node:timers/promises";
@@ -28,54 +27,44 @@ export const definitions: FunctionDefinition[] = [
   },
 ];
 
-async function main() {
-  const inst = standalone({
-    functions: definitions,
-    ports: {
-      http: 9000,
-      websocket: 9001,
-      lambda: 9002,
-    },
-    urls: {
-      mqtt: endpoint,
-    },
+const inst = standalone({
+  functions: definitions,
+  ports: {
+    http: 9000,
+    websocket: 9001,
+    lambda: 9002,
+  },
+  urls: {
+    mqtt: endpoint,
+  },
+});
+
+describe("iot", () => {
+  let g_client: mqtt.MqttClient | null;
+
+  before(async () => inst.start());
+
+  after(async () => {
+    await inst.stop();
+    await g_client?.endAsync(true);
   });
 
-  describe("iot", () => {
-    let g_client: mqtt.MqttClient | null;
+  it("scenario", async () => {
+    const client = mqtt.connect(endpoint);
+    g_client = client;
 
-    before(async () => inst.start());
+    const p = await new Promise((resolve) => {
+      client.on("connect", async () => {
+        const topic_foo = "pub/foo";
+        const payload = JSON.stringify({ tag: "foo" });
 
-    after(async () => {
-      await inst.stop();
-      await g_client?.endAsync(true);
-    });
-
-    it("scenario", async () => {
-      const client = mqtt.connect(endpoint);
-      g_client = client;
-
-      const p = await new Promise((resolve) => {
-        client.on("connect", async () => {
-          const topic_foo = "pub/foo";
-          const payload = JSON.stringify({ tag: "foo" });
-
-          await client.publishAsync(topic_foo, payload);
-          resolve(undefined);
-        });
+        await client.publishAsync(topic_foo, payload);
+        resolve(undefined);
       });
-
-      await delay(100);
-
-      assert.equal(invoked, true);
     });
-  });
-}
 
-// https://2ality.com/2022/07/nodejs-esm-main.html
-if (import.meta.url.startsWith("file:")) {
-  const modulePath = url.fileURLToPath(import.meta.url);
-  if (process.argv[1] === modulePath) {
-    await main();
-  }
-}
+    await delay(100);
+
+    assert.equal(invoked, true);
+  });
+});

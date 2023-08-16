@@ -1,4 +1,3 @@
-import url from "node:url";
 import { after, before, describe, it } from "node:test";
 import assert from "node:assert";
 import { WebSocket } from "ws";
@@ -86,104 +85,94 @@ export const definitions: FunctionDefinition[] = [
   },
 ];
 
-async function main() {
-  const inst = standalone({
-    functions: definitions,
-    ports: {
-      http: 9000,
-      websocket: 9001,
-      lambda: 9002,
-    },
-    urls: {},
-  });
+const inst = standalone({
+  functions: definitions,
+  ports: {
+    http: 9000,
+    websocket: 9001,
+    lambda: 9002,
+  },
+  urls: {},
+});
 
-  describe("websocket", () => {
-    before(async () => inst.start());
-    after(async () => inst.stop());
+describe("websocket", () => {
+  before(async () => inst.start());
+  after(async () => inst.stop());
 
-    let ws: WebSocket;
-    it("open", async () => {
-      ws = new WebSocket("ws://127.0.0.1:9001");
+  let ws: WebSocket;
+  it("open", async () => {
+    ws = new WebSocket("ws://127.0.0.1:9001");
 
-      ws.onopen = (evt) => console.log("open");
+    ws.onopen = (evt) => console.log("open");
 
-      ws.onclose = (evt) =>
-        console.log("close", {
-          code: evt.code,
-          reason: evt.reason,
-          wasClean: evt.wasClean,
-        });
+    ws.onclose = (evt) =>
+      console.log("close", {
+        code: evt.code,
+        reason: evt.reason,
+        wasClean: evt.wasClean,
+      });
 
-      ws.onerror = (evt) =>
-        console.log("error", {
-          message: evt.message,
-          error: evt.error,
-        });
+    ws.onerror = (evt) =>
+      console.log("error", {
+        message: evt.message,
+        error: evt.error,
+      });
 
-      ws.onmessage = (evt) => {
-        if (Buffer.isBuffer(evt.data)) {
-          const text = evt.data.toString("utf-8");
-          console.log("message", text);
-        } else {
-          console.log("message", evt.data);
-        }
-      };
-
-      // 커넥션 붙을떄까지 대기
-      for (let i = 0; i < 10; i++) {
-        if (g_connectionId) {
-          break;
-        }
-        await delay(100);
+    ws.onmessage = (evt) => {
+      if (Buffer.isBuffer(evt.data)) {
+        const text = evt.data.toString("utf-8");
+        console.log("message", text);
+      } else {
+        console.log("message", evt.data);
       }
-    });
+    };
 
-    it("PostToConnection: string", async () => {
-      const output = await client.send(
-        new PostToConnectionCommand({
-          ConnectionId: g_connectionId!,
-          Data: new TextEncoder().encode("hello"),
-        }),
-      );
-    });
-
-    it("PostToConnection: binary", async () => {
-      const data = new Uint8Array(2);
-      data[0] = 0x12;
-      data[1] = 0x34;
-
-      const output = await client.send(
-        new PostToConnectionCommand({
-          ConnectionId: g_connectionId!,
-          Data: data,
-        }),
-      );
-    });
-
-    it("GetConnection", async () => {
-      const output = await client.send(
-        new GetConnectionCommand({
-          ConnectionId: g_connectionId!,
-        }),
-      );
-      assert.equal(output.ConnectedAt instanceof Date, true);
-      assert.equal(output.LastActiveAt instanceof Date, true);
-    });
-
-    it("DeleteConnection", async () => {
-      const output = await client.send(
-        new DeleteConnectionCommand({
-          ConnectionId: g_connectionId!,
-        }),
-      );
-    });
+    // 커넥션 붙을떄까지 대기
+    for (let i = 0; i < 10; i++) {
+      if (g_connectionId) {
+        break;
+      }
+      await delay(100);
+    }
   });
-}
 
-// https://2ality.com/2022/07/nodejs-esm-main.html
-if (import.meta.url.startsWith("file:")) {
-  const modulePath = url.fileURLToPath(import.meta.url);
-  if (process.argv[1] === modulePath) {
-    await main();
-  }
-}
+  it("PostToConnection: string", async () => {
+    const output = await client.send(
+      new PostToConnectionCommand({
+        ConnectionId: g_connectionId!,
+        Data: new TextEncoder().encode("hello"),
+      }),
+    );
+  });
+
+  it("PostToConnection: binary", async () => {
+    const data = new Uint8Array(2);
+    data[0] = 0x12;
+    data[1] = 0x34;
+
+    const output = await client.send(
+      new PostToConnectionCommand({
+        ConnectionId: g_connectionId!,
+        Data: data,
+      }),
+    );
+  });
+
+  it("GetConnection", async () => {
+    const output = await client.send(
+      new GetConnectionCommand({
+        ConnectionId: g_connectionId!,
+      }),
+    );
+    assert.equal(output.ConnectedAt instanceof Date, true);
+    assert.equal(output.LastActiveAt instanceof Date, true);
+  });
+
+  it("DeleteConnection", async () => {
+    const output = await client.send(
+      new DeleteConnectionCommand({
+        ConnectionId: g_connectionId!,
+      }),
+    );
+  });
+});

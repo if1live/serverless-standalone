@@ -1,4 +1,3 @@
-import url from "node:url";
 import assert from "node:assert";
 import { describe, it, before, after } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
@@ -43,54 +42,44 @@ export const definitions: FunctionDefinition[] = [
   },
 ];
 
-async function main() {
-  const inst = standalone({
-    functions: definitions,
-    ports: {
-      http: 9000,
-      websocket: 9001,
-      lambda: 9002,
-    },
-    urls: {
-      sqs: endpoint,
-    },
+const inst = standalone({
+  functions: definitions,
+  ports: {
+    http: 9000,
+    websocket: 9001,
+    lambda: 9002,
+  },
+  urls: {
+    sqs: endpoint,
+  },
+});
+
+describe("sqs", () => {
+  before(async () => inst.start());
+  after(async () => inst.stop());
+
+  const queueUrl = createQueueUrl("hello-queue");
+
+  it("message 1: not invoked", async () => {
+    const input = { a: 1 };
+    const output = await client.send(
+      new SendMessageCommand({
+        MessageBody: JSON.stringify(input),
+        QueueUrl: queueUrl,
+      }),
+    );
+    assert.equal(invoked, false);
   });
 
-  describe("sqs", () => {
-    before(async () => inst.start());
-    after(async () => inst.stop());
-
-    const queueUrl = createQueueUrl("hello-queue");
-
-    it("message 1: not invoked", async () => {
-      const input = { a: 1 };
-      const output = await client.send(
-        new SendMessageCommand({
-          MessageBody: JSON.stringify(input),
-          QueueUrl: queueUrl,
-        }),
-      );
-      assert.equal(invoked, false);
-    });
-
-    it("message 2: batchSize", async () => {
-      const input = { a: 2 };
-      const output = await client.send(
-        new SendMessageCommand({
-          MessageBody: JSON.stringify(input),
-          QueueUrl: queueUrl,
-        }),
-      );
-      await delay(100);
-      assert.equal(invoked, true);
-    });
+  it("message 2: batchSize", async () => {
+    const input = { a: 2 };
+    const output = await client.send(
+      new SendMessageCommand({
+        MessageBody: JSON.stringify(input),
+        QueueUrl: queueUrl,
+      }),
+    );
+    await delay(100);
+    assert.equal(invoked, true);
   });
-}
-
-// https://2ality.com/2022/07/nodejs-esm-main.html
-if (import.meta.url.startsWith("file:")) {
-  const modulePath = url.fileURLToPath(import.meta.url);
-  if (process.argv[1] === modulePath) {
-    await main();
-  }
-}
+});

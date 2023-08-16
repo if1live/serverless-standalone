@@ -1,4 +1,3 @@
-import url from "node:url";
 import zlib from "node:zlib";
 import { promisify } from "node:util";
 import { after, before, describe, it } from "node:test";
@@ -232,44 +231,35 @@ export const definitions: FunctionDefinition[] = [
   },
 ];
 
-async function main() {
-  const inst = standalone({
-    functions: definitions,
-    ports: {
-      http: 9000,
-      websocket: 9001,
-      lambda: 9002,
-    },
-    urls: {},
+const inst = standalone({
+  functions: definitions,
+  ports: {
+    http: 9000,
+    websocket: 9001,
+    lambda: 9002,
+  },
+  urls: {},
+});
+
+describe("http", () => {
+  before(async () => inst.start());
+  after(async () => inst.stop());
+
+  describe("http#route", () => {
+    it("exact_get", async () => test_route_exact_get());
+    it("exact_post", async () => test_route_exact_post());
+    it("fixed", async () => test_route_fixed());
+    it("variadic", async () => test_route_variadic());
+    it("mixed", async () => test_route_mixed());
+    it("404", async () => test_route_404());
   });
 
-  describe("http", () => {
-    before(async () => inst.start());
-    after(async () => inst.stop());
-
-    describe("http#route", () => {
-      it("exact_get", async () => test_route_exact_get());
-      it("exact_post", async () => test_route_exact_post());
-      it("fixed", async () => test_route_fixed());
-      it("variadic", async () => test_route_variadic());
-      it("mixed", async () => test_route_mixed());
-      it("404", async () => test_route_404());
-    });
-
-    describe("http#dump", () => {
-      it("get", async () => test_dump_get());
-      it("post", async () => test_dump_post());
-    });
-
-    describe("http#binary", () => {
-      it("binary", async () => test_binary());
-    });
+  describe("http#dump", () => {
+    it("get", async () => test_dump_get());
+    it("post", async () => test_dump_post());
   });
-}
 
-if (import.meta.url.startsWith("file:")) {
-  const modulePath = url.fileURLToPath(import.meta.url);
-  if (process.argv[1] === modulePath) {
-    await main();
-  }
-}
+  describe("http#binary", () => {
+    it("binary", async () => test_binary());
+  });
+});
