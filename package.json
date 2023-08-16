@@ -17,7 +17,7 @@
     "dist/*",
     "dist/src/*",
     "!dist/test/*",
-    "!dist/examples/*"
+    "!dist/e2e/*"
   ],
   "scripts": {
     "build": "tsc",

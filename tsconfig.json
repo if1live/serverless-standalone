@@ -109,6 +109,6 @@
   "include": [
     "src/**/*.ts",
     "test/**/*.ts",
-    "examples/**/*.ts"
+    "e2e/**/*.ts"
   ]
 }
