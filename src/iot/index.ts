@@ -26,24 +26,33 @@ export const create = (
     }));
   });
 
-  let client: mqtt.MqttClient;
+  let g_client: mqtt.MqttClient | null;
 
-  const start = () => {
+  const start = async () => {
     const client = mqtt.connect(url);
+    g_client = client;
 
-    client.on("connect", async (packet) => {
-      const topics = functions
-        .map((x) => x.iot.sql)
-        .map((sql) => extractTopic(sql))
-        .filter(R.isNonNull);
+    const p_connect = new Promise((resolve) => {
+      client.on("connect", async (packet) => {
+        const topics = functions
+          .map((x) => x.iot.sql)
+          .map((sql) => extractTopic(sql))
+          .filter(R.isNonNull);
 
-      if (topics.length > 0) {
-        await client.subscribeAsync(topics);
-      }
+        if (topics.length > 0) {
+          await client.subscribeAsync(topics);
+        }
+
+        resolve(true);
+      });
     });
 
     client.on("error", (e) => {
       console.error("error", e);
+    });
+
+    client.on("close", () => {
+      console.error("close");
     });
 
     client.on("reconnect", () => {
@@ -68,9 +77,17 @@ export const create = (
       });
       await Promise.allSettled(tasks);
     });
+
+    // 적어도 connect는 끝나야 다음 작업을 보장할 수 있다
+    await p_connect;
   };
 
-  const stop = async () => client.endAsync(true);
+  const stop = async () => {
+    if (!g_client) {
+      throw new Error("iot is not started");
+    }
+    await g_client.endAsync(true);
+  };
 
   return { start, stop };
 };

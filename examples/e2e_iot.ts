@@ -1,10 +1,16 @@
 import mqtt from "mqtt";
 import url from "node:url";
+import { before, after, describe, it } from "node:test";
+import assert from "node:assert";
 import { setTimeout as delay } from "node:timers/promises";
 import { IoTHandler } from "aws-lambda";
-import type { FunctionDefinition } from "../src/index.js";
+import { standalone, type FunctionDefinition } from "../src/index.js";
 
+export const endpoint = "mqtt://artemis:artemis@127.0.0.1:1883";
+
+let invoked = false;
 const iot_simple: IoTHandler = async (event, context) => {
+  invoked = true;
   console.log("iot_simple", event);
 };
 
@@ -22,29 +28,47 @@ export const definitions: FunctionDefinition[] = [
   },
 ];
 
-export const endpoint = "mqtt://artemis:artemis@127.0.0.1:1883";
-
 async function main() {
-  const client = mqtt.connect(endpoint);
+  const inst = standalone({
+    functions: definitions,
+    ports: {
+      http: 9000,
+      websocket: 9001,
+      lambda: 9002,
+    },
+    urls: {
+      mqtt: endpoint,
+    },
+  });
 
-  client.on("connect", async () => {
-    console.log("connect");
+  describe("iot", () => {
+    let g_client: mqtt.MqttClient | null;
 
-    const topic_foo = "pub/foo";
-    const topic_drop = "pub/drop";
+    before(async () => inst.start());
 
-    const loop = 1;
-    for (let i = 1; i <= loop; i++) {
-      await client.publishAsync(topic_foo, JSON.stringify({ tag: "foo", i }));
-      await client.publishAsync(topic_drop, JSON.stringify({ tag: "drop", i }));
-      console.log("publish", i);
+    after(async () => {
+      await inst.stop();
+      await g_client?.endAsync(true);
+    });
 
-      if (i !== loop) {
-        await delay(1_000);
-      }
-    }
+    it("scenario", async () => {
+      const client = mqtt.connect(endpoint);
+      g_client = client;
 
-    process.exit(0);
+      const p = await new Promise((resolve) => {
+        client.on("connect", async () => {
+          const topic_foo = "pub/foo";
+          const payload = JSON.stringify({ tag: "foo" });
+
+          await client.publishAsync(topic_foo, payload);
+          resolve(undefined);
+        });
+      });
+
+      await delay(100);
+
+      assert.equal(invoked, true);
+    });
   });
 }
 

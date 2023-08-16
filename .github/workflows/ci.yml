@@ -71,3 +71,6 @@ jobs:
 
       - name: e2e_sqs
         run: pnpm tsx ./examples/e2e_sqs.ts
+
+      - name: e2e_iot
+        run: pnpm tsx ./examples/e2e_iot.ts
