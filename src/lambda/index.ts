@@ -4,7 +4,10 @@ import * as helpers from "../helpers.js";
 
 export const prefix = "/2015-03-31/functions/";
 
-export const create = (definitions: FunctionDefinition[]) => {
+export const execute = async (
+  port: number,
+  definitions: FunctionDefinition[],
+) => {
   const handle: http.RequestListener = async (req, res) => {
     const parsed = parseRequest(req);
     if (parsed._tag === "invoke") {
@@ -28,9 +31,24 @@ export const create = (definitions: FunctionDefinition[]) => {
     }
   };
 
-  return {
-    handle,
+  const dispatchApi: http.RequestListener = async (req, res) => {
+    try {
+      if (req.url?.startsWith(prefix)) {
+        return handle(req, res);
+      } else {
+        const data = {
+          message: `${req.method} ${req.url} NotFound`,
+        };
+        helpers.replyJson(res, 400, data);
+      }
+    } catch (err) {
+      const e = err as any;
+      const status = e.status ?? e.statusCode ?? 500;
+      const data = { message: (e as any).message };
+      helpers.replyJson(res, status, data);
+    }
   };
+  http.createServer(dispatchApi).listen(port);
 };
 
 /** POST /2015-03-31/functions/lambda_simple/invocations */

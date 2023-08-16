@@ -24,9 +24,9 @@ const definitions: FunctionDefinition[] = [
 await StandAlone.start({
   functions: definitions,
   ports: {
-    httpApi: 9000,
+    http: 9000,
     websocket: 9001,
-    awsApi: 9002,
+    lambda: 9002,
   },
   urls: {
     mqtt: url_mqtt,

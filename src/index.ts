@@ -10,9 +10,9 @@ import { FunctionDefinition } from "./types.js";
 async function start(params: {
   functions: FunctionDefinition[];
   ports: {
-    httpApi: number;
+    http: number;
     websocket: number;
-    awsApi: number;
+    lambda: number;
   };
   urls: {
     mqtt?: string;
@@ -21,18 +21,10 @@ async function start(params: {
 }) {
   const { functions, ports, urls } = params;
 
-  const lambdaMain = lambda.create(functions);
-
-  const main_awsApi = async (port: number) => {
-    http.createServer(dispatchApi).listen(port);
-  };
-
   const dispatchApi: http.RequestListener = async (req, res) => {
     try {
       if (req.url?.startsWith(apigateway.websocket.prefix)) {
         return apigateway.websocket.handle(req, res);
-      } else if (req.url?.startsWith(lambda.prefix)) {
-        return lambdaMain.handle(req, res);
       } else {
         const data = {
           message: `${req.method} ${req.url} NotFound`,
@@ -44,6 +36,13 @@ async function start(params: {
       const status = e.status ?? e.statusCode ?? 500;
       const data = { message: (e as any).message };
       helpers.replyJson(res, status, data);
+    }
+  };
+
+  const fn_lambda = async (port: number) => {
+    // TODO: 람다 함수 하나도 없을떄만 건너뛰기
+    if (true) {
+      await lambda.execute(port, functions);
     }
   };
 
@@ -81,8 +80,8 @@ async function start(params: {
   };
 
   await Promise.all([
-    main_awsApi(ports.awsApi),
-    fn_apigateway_httpApi(ports.httpApi),
+    fn_lambda(ports.lambda),
+    fn_apigateway_httpApi(ports.http),
     fn_apigateway_websocket(ports.websocket),
     fn_schedule(),
     fn_iot(),
