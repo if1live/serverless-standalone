@@ -1,5 +1,3 @@
-import http from "node:http";
-import * as helpers from "./helpers.js";
 import * as apigateway from "./apigateway/index.js";
 import * as schedule from "./schedule/index.js";
 import * as lambda from "./lambda/index.js";
@@ -20,24 +18,6 @@ async function start(params: {
   };
 }) {
   const { functions, ports, urls } = params;
-
-  const dispatchApi: http.RequestListener = async (req, res) => {
-    try {
-      if (req.url?.startsWith(apigateway.websocket.prefix)) {
-        return apigateway.websocket.handle(req, res);
-      } else {
-        const data = {
-          message: `${req.method} ${req.url} NotFound`,
-        };
-        helpers.replyJson(res, 400, data);
-      }
-    } catch (err) {
-      const e = err as any;
-      const status = e.status ?? e.statusCode ?? 500;
-      const data = { message: (e as any).message };
-      helpers.replyJson(res, status, data);
-    }
-  };
 
   const fn_lambda = async (port: number) => {
     // TODO: 람다 함수 하나도 없을떄만 건너뛰기

@@ -67,7 +67,27 @@ export const execute = async (
     .filter(isDefaultFn)
     .map((x) => castFunctionDefinition<APIGatewayProxyWebsocketHandlerV2>(x));
 
-  const wss = new WebSocketServer({ port });
+  const dispatchApi: http.RequestListener = async (req, res) => {
+    try {
+      if (req.url?.startsWith(prefix)) {
+        return handle(req, res);
+      } else {
+        const data = {
+          message: `${req.method} ${req.url} NotFound`,
+        };
+        helpers.replyJson(res, 400, data);
+      }
+    } catch (err) {
+      const e = err as any;
+      const status = e.status ?? e.statusCode ?? 500;
+      const data = { message: (e as any).message };
+      helpers.replyJson(res, status, data);
+    }
+  };
+
+  const server = http.createServer(dispatchApi);
+  const wss = new WebSocketServer({ server });
+
   wss.on("connection", async (ws, req) => {
     const connectedAt = new Date();
     const sock = ws as any as MyWebSocket;
@@ -159,6 +179,8 @@ export const execute = async (
 
     ws.on("error", console.error);
   });
+
+  server.listen(port);
 };
 
 export const handle: AwsApiHandler = async (req, res) => {

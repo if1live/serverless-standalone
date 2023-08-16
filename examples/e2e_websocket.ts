@@ -49,7 +49,7 @@ const websocket_message: APIGatewayProxyWebsocketHandlerV2 = async (
   // echo
   const client = new ApiGatewayManagementApiClient({
     region: "ap-northeast-1",
-    endpoint: "http://127.0.0.1:9002/",
+    endpoint: "http://127.0.0.1:9001/",
     credentials: {
       accessKeyId: "localAccessKeyId",
       secretAccessKey: "localAecretAccessKey",
@@ -86,7 +86,7 @@ export const definitions: FunctionDefinition[] = [
 async function main() {
   const client = new ApiGatewayManagementApiClient({
     region: "ap-northeast-1",
-    endpoint: "http://127.0.0.1:9002/",
+    endpoint: "http://127.0.0.1:9001/",
     credentials: {
       accessKeyId: "localAccessKeyId",
       secretAccessKey: "localAecretAccessKey",
