@@ -92,17 +92,26 @@ export const create = (
     const isBase64Encoded = result.isBase64Encoded ?? false;
     const statusCode = result.statusCode ?? 200;
 
+    const headers_entries = result.headers
+      ? Object.entries(result.headers)
+      : [];
+    const header_contentType = headers_entries
+      .filter((x) => x[0].toLowerCase() === "content-type")
+      .map((x) => x[1] as string);
+    const contentType = header_contentType[0];
+
     res.statusCode = statusCode;
 
-    // TODO: default header?
-    if (result.headers) {
-      for (const [key, value] of Object.entries(result.headers)) {
-        res.setHeader(key, `${value}`);
-      }
+    for (const [key, value] of headers_entries) {
+      res.setHeader(key, `${value}`);
+    }
+    if (result.cookies) {
+      res.setHeader("Set-Cookie", result.cookies);
     }
 
-    if (result.cookies) {
-      // TODO: cookie?
+    // contentType 없을땐 apigateway 명세의 기본값을 사용
+    if (!contentType) {
+      res.setHeader("content-type", "application/json");
     }
 
     if (isBase64Encoded && result.body) {
@@ -160,6 +169,10 @@ async function createEventV2(
     }),
   );
 
+  const cookies = req.headers["cookie"]
+    ? req.headers["cookie"].split(";").map((x) => x.trim())
+    : undefined;
+
   const queryStringParameters: Record<string, string> = {};
   for (const key of url.searchParams.keys()) {
     const value = url.searchParams.getAll(key);
@@ -196,6 +209,7 @@ async function createEventV2(
     rawPath,
     rawQueryString,
     headers,
+    cookies,
     queryStringParameters,
     pathParameters,
     body,
