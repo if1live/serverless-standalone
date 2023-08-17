@@ -2,7 +2,6 @@ import http from "node:http";
 import { createHttpTerminator } from "http-terminator";
 import { FunctionDefinition, ServiceRunner, UnknownHandler } from "../types.js";
 import * as helpers from "../helpers.js";
-import { InvocationType } from "@aws-sdk/client-lambda";
 
 export const prefix = "/2015-03-31/functions/";
 
@@ -34,10 +33,10 @@ export const create = (
       const f = found.handler as UnknownHandler;
 
       const invocationType = req.headers["x-amz-invocation-type"];
-      if (invocationType === InvocationType.RequestResponse) {
+      if (invocationType === "RequestResponse") {
         const output = await f(event, context);
         return helpers.replyJson(res, 200, output);
-      } else if (invocationType === InvocationType.Event) {
+      } else if (invocationType === "Event") {
         f(event, context).then();
         return helpers.replyJson(res, 200, {});
       } else {
