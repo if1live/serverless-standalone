@@ -24,24 +24,30 @@ const client = new ApiGatewayManagementApiClient({
 });
 
 let g_connectionId: string | null = null;
+let invoked_connect = false;
+let invoked_disconnect = false;
+let invoked_message = false;
 
 const websocket_connect: APIGatewayProxyHandler = async (event, context) => {
   const connectionId = event.requestContext.connectionId!;
+  g_connectionId = connectionId;
+  invoked_connect = true;
+
   console.log("connect", {
     connectionId,
     queryStringParameters: event.queryStringParameters,
     multiValueQueryStringParameters: event.multiValueQueryStringParameters,
   });
-
-  g_connectionId = connectionId;
   return { statusCode: 200, body: "OK" };
 };
 
 const websocket_disconnect: APIGatewayProxyHandler = async (event, context) => {
-  const connectionId = event.requestContext.connectionId;
+  const connectionId = event.requestContext.connectionId!;
+  g_connectionId = null;
+  invoked_disconnect = true;
+
   console.log("disconnect", { connectionId });
 
-  g_connectionId = null;
   return { statusCode: 200, body: "OK" };
 };
 
@@ -49,7 +55,9 @@ const websocket_message: APIGatewayProxyWebsocketHandlerV2 = async (
   event,
   context,
 ) => {
-  const connectionId = event.requestContext.connectionId;
+  const connectionId = event.requestContext.connectionId!;
+  invoked_message = true;
+
   console.log("message", {
     connectionId,
     body: event.body,
@@ -98,37 +106,43 @@ describe("websocket", () => {
   it("open", async () => {
     ws = new WebSocket("ws://127.0.0.1:9001");
 
-    ws.onopen = (evt) => console.log("open");
+    const p = new Promise((resolve) => {
+      const message_onopen = "initial";
 
-    ws.onclose = (evt) =>
-      console.log("close", {
-        code: evt.code,
-        reason: evt.reason,
-        wasClean: evt.wasClean,
-      });
+      ws.onopen = (evt) => {
+        console.log("open");
+        ws.send(message_onopen);
+      };
 
-    ws.onerror = (evt) =>
-      console.log("error", {
-        message: evt.message,
-        error: evt.error,
-      });
+      ws.onclose = (evt) =>
+        console.log("close", {
+          code: evt.code,
+          reason: evt.reason,
+          wasClean: evt.wasClean,
+        });
 
-    ws.onmessage = (evt) => {
-      if (Buffer.isBuffer(evt.data)) {
-        const text = evt.data.toString("utf-8");
-        console.log("message", text);
-      } else {
-        console.log("message", evt.data);
-      }
-    };
+      ws.onerror = (evt) =>
+        console.log("error", {
+          message: evt.message,
+          error: evt.error,
+        });
 
-    // 커넥션 붙을떄까지 대기
-    for (let i = 0; i < 10; i++) {
-      if (g_connectionId) {
-        break;
-      }
-      await delay(100);
-    }
+      ws.onmessage = (evt) => {
+        if (Buffer.isBuffer(evt.data)) {
+          const text = evt.data.toString("utf-8");
+          if (text === message_onopen) {
+            resolve(true);
+          } else {
+            console.log("message", text);
+          }
+        } else {
+          console.log("message", evt.data);
+        }
+      };
+    });
+
+    await p;
+    assert.equal(invoked_connect, true);
   });
 
   it("PostToConnection: string", async () => {
@@ -169,5 +183,8 @@ describe("websocket", () => {
         ConnectionId: g_connectionId!,
       }),
     );
+
+    await delay(10);
+    assert.equal(invoked_disconnect, true);
   });
 });
