@@ -9,7 +9,12 @@ import {
   castFunctionDefinition,
 } from "../types.js";
 
-export const create = (definitions: FunctionDefinition[]): ServiceRunner => {
+export interface Options {}
+
+export const create = (
+  definitions: FunctionDefinition[],
+  options: Options,
+): ServiceRunner => {
   const functions = definitions.flatMap((definition0) => {
     const definition = castFunctionDefinition<ScheduledHandler>(definition0);
     const events = definition.events

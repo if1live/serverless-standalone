@@ -12,25 +12,35 @@ const mock: ServiceRunner = {
 
 export function standalone(params: {
   functions: FunctionDefinition[];
-  ports: {
-    http: number;
-    websocket: number;
-    lambda: number;
-  };
-  urls: {
-    mqtt?: string;
-    sqs?: string;
-  };
+  httpApi?: httpApi.Options;
+  websocket?: websocket.Options;
+  lambda?: lambda.Options;
+  schedule?: schedule.Options;
+  sqs?: sqs.Options;
+  iot?: iot.Options;
 }) {
-  const { functions, ports, urls } = params;
+  const { functions } = params;
 
   // TODO: 핸들러 없으면 건너뛰도록
-  const inst_httpApi = httpApi.create(ports.http, functions);
-  const inst_webscoket = websocket.create(ports.websocket, functions);
-  const inst_lambda = lambda.create(ports.lambda, functions);
-  const inst_schedule = schedule.create(functions);
-  const inst_sqs = urls.sqs ? sqs.create(urls.sqs, functions) : mock;
-  const inst_iot = urls.mqtt ? iot.create(urls.mqtt, functions) : mock;
+  const inst_httpApi = params.httpApi
+    ? httpApi.create(functions, params.httpApi)
+    : mock;
+
+  const inst_webscoket = params.websocket
+    ? websocket.create(functions, params.websocket)
+    : mock;
+
+  const inst_lambda = params.lambda
+    ? lambda.create(functions, params.lambda)
+    : mock;
+
+  const inst_schedule = params.schedule
+    ? schedule.create(functions, params.schedule)
+    : mock;
+
+  const inst_sqs = params.sqs ? sqs.create(functions, params.sqs) : mock;
+
+  const inst_iot = params.iot ? iot.create(functions, params.iot) : mock;
 
   const items: ServiceRunner[] = [
     inst_httpApi,

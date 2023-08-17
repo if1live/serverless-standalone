@@ -41,12 +41,7 @@ export const definitions: FunctionDefinition[] = [
 
 const inst = standalone({
   functions: definitions,
-  ports: {
-    http: 9000,
-    websocket: 9001,
-    lambda: 9002,
-  },
-  urls: {},
+  lambda: { port: 9002 },
 });
 
 describe("lambda", () => {

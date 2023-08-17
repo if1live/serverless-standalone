@@ -41,12 +41,7 @@ const functions: FunctionDefinition[] = [definition];
 
 const inst = standalone({
   functions: functions,
-  ports: {
-    http: 9000,
-    websocket: 9001,
-    lambda: 9002,
-  },
-  urls: {},
+  schedule: {},
 });
 
 describe("schedule", () => {

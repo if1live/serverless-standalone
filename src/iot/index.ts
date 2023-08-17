@@ -8,10 +8,16 @@ import {
 } from "../types.js";
 import * as helpers from "../helpers.js";
 
+export interface Options {
+  mqtt: string;
+}
+
 export const create = (
-  url: string,
   definitions: FunctionDefinition[],
+  options: Options,
 ): ServiceRunner => {
+  const { mqtt: url } = options;
+
   const functions = definitions.flatMap((x) => {
     const definition = castFunctionDefinition<IoTHandler>(x);
 

@@ -33,12 +33,18 @@ interface Element {
 
 let running = true;
 
+export interface Options {
+  url: string;
+}
+
 // serverless-offline-sqs 참고
 // https://github.com/CoorpAcademy/serverless-plugins/blob/master/packages/serverless-offline-sqs/src/sqs.js
 export const create = (
-  url: string,
   definitions: FunctionDefinition[],
+  options: Options,
 ): ServiceRunner => {
+  const { url } = options;
+
   const client = new SQSClient({
     region: "ap-northeast-1",
     endpoint: url,

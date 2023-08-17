@@ -21,10 +21,16 @@ import {
   PathMatcher,
 } from "./matchers.js";
 
+export interface Options {
+  port: number;
+}
+
 export const create = (
-  port: number,
   definitions: FunctionDefinition[],
+  options: Options,
 ): ServiceRunner => {
+  const { port } = options;
+
   // 이벤트 중심으로 생각하려고 이벤트-핸들러를 1:1로 맵핑
   const functions = definitions
     .flatMap((x) => {

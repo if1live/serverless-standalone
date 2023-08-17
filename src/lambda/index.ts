@@ -6,10 +6,16 @@ import { InvocationType } from "@aws-sdk/client-lambda";
 
 export const prefix = "/2015-03-31/functions/";
 
+export interface Options {
+  port: number;
+}
+
 export const create = (
-  port: number,
   definitions: FunctionDefinition[],
+  options: Options,
 ): ServiceRunner => {
+  const { port } = options;
+
   const handle: http.RequestListener = async (req, res) => {
     const parsed = parseRequest(req);
     if (parsed._tag === "invoke") {

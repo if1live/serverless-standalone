@@ -53,10 +53,15 @@ const isDefaultFn = (x: FunctionDefinition) => {
 
 const sockets = new Map<string, MyWebSocket>();
 
+export interface Options {
+  port: number;
+}
+
 export const create = (
-  port: number,
   definitions: FunctionDefinition[],
+  options: Options,
 ): ServiceRunner => {
+  const { port } = options;
   const definitions_connect = definitions
     .filter(isConnectFn)
     .map((x) => castFunctionDefinition<APIGatewayProxyHandler>(x));
