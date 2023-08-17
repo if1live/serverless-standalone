@@ -191,7 +191,6 @@ export const create = (
   const start = async () => {
     return new Promise((resolve) => {
       server.listen(port, () => {
-        console.log(`listen websocket: ws://127.0.0.1:${port}`);
         resolve(port);
       });
     });
