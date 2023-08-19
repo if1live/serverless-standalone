@@ -33,7 +33,11 @@ export const create = (
       const event = createEvent(sched, now);
       const awsRequestId = helpers.createUniqueId();
       const context = helpers.generateLambdaContext(name, awsRequestId);
-      await f(event, context, helpers.emptyCallback);
+      try {
+        await f(event, context, helpers.emptyCallback);
+      } catch (e) {
+        console.error(e);
+      }
     });
   });
 

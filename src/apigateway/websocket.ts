@@ -116,12 +116,16 @@ export const create = (
         searchParams: url.searchParams,
       });
 
-      await Promise.allSettled(
+      await Promise.all(
         definitions_connect.map(async (definition) => {
           const { handler: f, name } = definition;
           const awsRequestId = helpers.createUniqueId();
           const context = helpers.generateLambdaContext(name, awsRequestId);
-          await f(event as any, context, helpers.emptyCallback);
+          try {
+            await f(event as any, context, helpers.emptyCallback);
+          } catch (e) {
+            console.error(e);
+          }
         }),
       );
     }
@@ -136,12 +140,16 @@ export const create = (
         reason: "",
       });
 
-      await Promise.allSettled(
+      await Promise.all(
         definitions_disconnect.map(async (definition) => {
           const { handler: f, name } = definition;
           const awsRequestId = helpers.createUniqueId();
           const context = helpers.generateLambdaContext(name, awsRequestId);
-          await f(event as any, context, helpers.emptyCallback);
+          try {
+            await f(event as any, context, helpers.emptyCallback);
+          } catch (e) {
+            console.error(e);
+          }
         }),
       );
     });
@@ -170,12 +178,16 @@ export const create = (
         message,
       });
 
-      await Promise.allSettled(
+      await Promise.all(
         definitions_default.map(async (definition) => {
           const { handler: f, name } = definition;
           const awsRequestId = helpers.createUniqueId();
           const context = helpers.generateLambdaContext(name, awsRequestId);
-          await f(event as any, context, helpers.emptyCallback);
+          try {
+            await f(event as any, context, helpers.emptyCallback);
+          } catch (e) {
+            console.error(e);
+          }
         }),
       );
     });

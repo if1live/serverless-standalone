@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { describe, it, before, after } from "node:test";
+import { describe, it, before, after, beforeEach } from "node:test";
 import {
   LambdaClient,
   InvocationType,
@@ -31,10 +31,24 @@ const lambda_simple = async (
   return event;
 };
 
+const lambda_exception = async (
+  event: Record<string, string>,
+  context: Context,
+) => {
+  const label = event.label ?? "";
+  invokedSet.add(label);
+  throw new Error("simple");
+};
+
 export const definitions: FunctionDefinition[] = [
   {
     name: "lambda_simple",
     handler: lambda_simple,
+    events: [],
+  },
+  {
+    name: "lambda_exception",
+    handler: lambda_exception,
     events: [],
   },
 ];
@@ -48,7 +62,8 @@ describe("lambda", () => {
   before(async () => inst.start());
   after(async () => inst.stop());
 
-  const functionName = "lambda_simple";
+  const functionName_echo = "lambda_simple";
+  const functionName_exception = "lambda_exception";
 
   function extractPayload(output: InvokeCommandOutput) {
     const payloadText = output.Payload
@@ -58,39 +73,74 @@ describe("lambda", () => {
     return payload;
   }
 
-  it("request-response", async () => {
+  beforeEach(() => invokedSet.clear());
+
+  describe("request-response", () => {
     const label = "request-response";
     const input = { label };
+    const invocationType = InvocationType.RequestResponse;
 
-    const output = await client.send(
-      new InvokeCommand({
-        FunctionName: functionName,
-        Payload: new TextEncoder().encode(JSON.stringify(input)),
-        InvocationType: InvocationType.RequestResponse,
-      }),
-    );
-    const payload = extractPayload(output);
+    it("ok", async () => {
+      const output = await client.send(
+        new InvokeCommand({
+          FunctionName: functionName_echo,
+          Payload: new TextEncoder().encode(JSON.stringify(input)),
+          InvocationType: invocationType,
+        }),
+      );
+      const payload = extractPayload(output);
 
-    assert.equal(output.StatusCode, 200);
-    assert.deepEqual(payload, input);
-    // assert.equal(invokedSet.has(label), true);
+      assert.equal(output.StatusCode, 200);
+      assert.deepEqual(payload, input);
+      // assert.equal(invokedSet.has(label), true);
+    });
+
+    it("exception", async () => {
+      await assert.rejects(async () => {
+        const output = await client.send(
+          new InvokeCommand({
+            FunctionName: functionName_exception,
+            Payload: new TextEncoder().encode(JSON.stringify(input)),
+            InvocationType: invocationType,
+          }),
+        );
+      });
+    });
   });
 
-  it("event", async () => {
+  describe("event", () => {
     const label = "event";
     const input = { label };
+    const invocationType = InvocationType.Event;
 
-    const output = await client.send(
-      new InvokeCommand({
-        FunctionName: functionName,
-        Payload: new TextEncoder().encode(JSON.stringify(input)),
-        InvocationType: InvocationType.Event,
-      }),
-    );
-    const payload = extractPayload(output);
+    it("ok", async () => {
+      const output = await client.send(
+        new InvokeCommand({
+          FunctionName: functionName_echo,
+          Payload: new TextEncoder().encode(JSON.stringify(input)),
+          InvocationType: invocationType,
+        }),
+      );
+      const payload = extractPayload(output);
 
-    assert.equal(output.StatusCode, 200);
-    assert.deepEqual(payload, {});
-    // assert.equal(invokedSet.has(label), true);
+      assert.equal(output.StatusCode, 200);
+      assert.deepEqual(payload, {});
+      // assert.equal(invokedSet.has(label), true);
+    });
+
+    it("exception", async () => {
+      const output = await client.send(
+        new InvokeCommand({
+          FunctionName: functionName_exception,
+          Payload: new TextEncoder().encode(JSON.stringify(input)),
+          InvocationType: invocationType,
+        }),
+      );
+
+      const payload = extractPayload(output);
+
+      assert.equal(output.StatusCode, 200);
+      assert.deepEqual(payload, {});
+    });
   });
 });

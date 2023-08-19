@@ -1,9 +1,12 @@
 import http from "node:http";
+import { Context } from "aws-lambda";
 import { createHttpTerminator } from "http-terminator";
 import { FunctionDefinition, ServiceRunner, UnknownHandler } from "../types.js";
 import * as helpers from "../helpers.js";
 
 export const prefix = "/2015-03-31/functions/";
+
+type InvocationType = "RequestResponse" | "Event";
 
 export interface Options {
   port: number;
@@ -30,18 +33,19 @@ export const create = (
 
       const awsRequestId = helpers.createUniqueId();
       const context = helpers.generateLambdaContext(found.name, awsRequestId);
-      const f = found.handler as UnknownHandler;
+      const invocation: Invocation = {
+        handler: found.handler as UnknownHandler,
+        context,
+        event,
+      };
 
-      const invocationType = req.headers["x-amz-invocation-type"];
-      if (invocationType === "RequestResponse") {
-        const output = await f(event, context);
-        return helpers.replyJson(res, 200, output);
-      } else if (invocationType === "Event") {
-        f(event, context).then();
-        return helpers.replyJson(res, 200, {});
+      if (parsed.invocationType === "RequestResponse") {
+        return await invoke_requestResponse(res, invocation);
+      } else if (parsed.invocationType === "Event") {
+        return invoke_event(res, invocation);
       } else {
         const resp = {
-          message: `not supported invocationType: ${invocationType}`,
+          message: `not supported invocationType: ${parsed.invocationType}`,
         };
         return helpers.replyJson(res, 400, resp);
       }
@@ -91,19 +95,22 @@ export const create = (
 const re_invoke = /^\/2015-03-31\/functions\/([a-zA-Z0-0_]+)\/invocations$/;
 
 const parseRequest_invoke = (
-  req: Pick<http.IncomingMessage, "method" | "url">,
+  req: Pick<http.IncomingMessage, "method" | "url" | "headers">,
 ) => {
   const m = re_invoke.exec(req.url ?? "");
   if (req.method === "POST" && m) {
+    const invocationType = req.headers["x-amz-invocation-type"];
+
     return {
       _tag: "invoke" as const,
       functionName: m[1]!,
+      invocationType: invocationType as InvocationType,
     };
   }
 };
 
 export const parseRequest = (
-  req: Pick<http.IncomingMessage, "method" | "url">,
+  req: Pick<http.IncomingMessage, "method" | "url" | "headers">,
 ) => {
   const result_invoke = parseRequest_invoke(req);
   if (result_invoke) {
@@ -111,4 +118,60 @@ export const parseRequest = (
   }
 
   throw new Error("cannot parse lambda request");
+};
+
+type Invocation = {
+  handler: UnknownHandler;
+  event: object;
+  context: Context;
+};
+
+const invoke_requestResponse = async (
+  res: http.ServerResponse,
+  invocation: Invocation,
+) => {
+  const { handler: f, event, context } = invocation;
+
+  try {
+    const output = await f(event, context);
+    return helpers.replyJson(res, 200, output);
+  } catch (e) {
+    console.error(e);
+
+    // TODO: 에러 처리 중복?
+    const json_standard = {
+      message: "Internal Server Error",
+    };
+
+    let json_extra;
+    if (e instanceof Error) {
+      json_extra = {
+        error_name: e.name,
+        error_message: e.message,
+        stack: (e.stack ?? "").split("\n"),
+      };
+    } else {
+      json_extra = {
+        unknown: e,
+      };
+    }
+
+    const json = {
+      ...json_standard,
+      ...json_extra,
+    };
+    return helpers.replyJson(res, 500, json);
+  }
+};
+
+const invoke_event = (res: http.ServerResponse, invocation: Invocation) => {
+  const { handler: f, event, context } = invocation;
+
+  f(event, context)
+    .then()
+    .catch((e) => {
+      console.log(e);
+    });
+
+  return helpers.replyJson(res, 200, {});
 };

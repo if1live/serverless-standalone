@@ -10,7 +10,6 @@ export const endpoint = "mqtt://artemis:artemis@127.0.0.1:1883";
 let invoked = false;
 const iot_simple: IoTHandler = async (event, context) => {
   invoked = true;
-  console.log("iot_simple", event);
 };
 
 export const definitions: FunctionDefinition[] = [

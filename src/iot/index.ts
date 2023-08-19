@@ -75,9 +75,13 @@ export const create = (
         const { name, handler: f } = entry;
         const awsRequestId = helpers.createUniqueId();
         const context = helpers.generateLambdaContext(name, awsRequestId);
-        await f(event, context, helpers.emptyCallback);
+        try {
+          await f(event, context, helpers.emptyCallback);
+        } catch (e) {
+          console.error(e);
+        }
       });
-      await Promise.allSettled(tasks);
+      await Promise.all(tasks);
     });
 
     // 적어도 connect는 끝나야 다음 작업을 보장할 수 있다

@@ -4,9 +4,12 @@ import { parseRequest } from "../../src/lambda/index.js";
 
 describe("parse", () => {
   it("invoke", () => {
-    const req: Partial<http.IncomingMessage> = {
+    const req: Pick<http.IncomingMessage, "method" | "url" | "headers"> = {
       method: "POST",
       url: "/2015-03-31/functions/lambda_simple/invocations",
+      headers: {
+        "x-amz-invocation-type": "RequestResponse",
+      },
     };
     const actual = parseRequest(req);
 

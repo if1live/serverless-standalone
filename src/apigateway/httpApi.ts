@@ -101,6 +101,7 @@ export const create = (
       const output = await found.handler(event, context, helpers.emptyCallback);
       result = output as APIGatewayProxyStructuredResultV2;
     } catch (e) {
+      console.error(e);
       return handle_exception(res, e);
     }
 
