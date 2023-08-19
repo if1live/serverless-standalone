@@ -1,11 +1,7 @@
 import { IoTHandler } from "aws-lambda";
 import mqtt from "mqtt";
 import * as R from "remeda";
-import {
-  FunctionDefinition,
-  ServiceRunner,
-  castFunctionDefinition,
-} from "../types.js";
+import { FunctionDefinition, ServiceRunner } from "../types.js";
 import * as helpers from "../helpers.js";
 
 export interface Options {
@@ -18,16 +14,19 @@ export const create = (
 ): ServiceRunner => {
   const { mqtt: url } = options;
 
-  const functions = definitions.flatMap((x) => {
-    const definition = castFunctionDefinition<IoTHandler>(x);
-
-    const events = definition.events.map((x) => x.iot).filter(R.isNot(R.isNil));
-    return events.map((iot) => ({
-      name: definition.name,
-      handler: definition.handler,
-      iot,
-    }));
-  });
+  const functions = definitions
+    .map((x) => FunctionDefinition.narrow_event(x, "iot"))
+    .map((x) => {
+      const fn: IoTHandler = () => {};
+      return FunctionDefinition.narrow_handler(x, fn);
+    })
+    .flatMap((definition) => {
+      return definition.events.map((event) => ({
+        name: definition.name,
+        handler: definition.handler,
+        iot: event.iot,
+      }));
+    });
 
   let g_client: mqtt.MqttClient | null;
 

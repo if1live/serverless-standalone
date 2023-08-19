@@ -7,13 +7,7 @@ import {
 } from "aws-lambda";
 import { isArrayBuffer } from "node:util/types";
 import type { GetConnectionResponse } from "@aws-sdk/client-apigatewaymanagementapi";
-import {
-  AwsApiHandler,
-  FunctionDefinition,
-  FunctionEvent_WebSocket,
-  ServiceRunner,
-  castFunctionDefinition,
-} from "../types.js";
+import { AwsApiHandler, FunctionDefinition, ServiceRunner } from "../types.js";
 import * as helpers from "../helpers.js";
 import { WebSocketEventFactory } from "./events.js";
 
@@ -52,17 +46,31 @@ export const create = (
   options: Options,
 ): ServiceRunner => {
   const { port } = options;
-  const definitions_connect = definitions
-    .filter(isConnectFn)
-    .map((x) => castFunctionDefinition<APIGatewayProxyHandler>(x));
 
-  const definitions_disconnect = definitions
-    .filter(isDisconnectFn)
-    .map((x) => castFunctionDefinition<APIGatewayProxyHandler>(x));
+  const definitions_base = definitions.map((x) =>
+    FunctionDefinition.narrow_event(x, "websocket"),
+  );
 
-  const definitions_default = definitions
-    .filter(isDefaultFn)
-    .map((x) => castFunctionDefinition<APIGatewayProxyWebsocketHandlerV2>(x));
+  const definitions_connect = definitions_base
+    .map((x) => {
+      const fn: APIGatewayProxyHandler = () => {};
+      return FunctionDefinition.narrow_handler(x, fn);
+    })
+    .filter(isConnectFn);
+
+  const definitions_disconnect = definitions_base
+    .map((x) => {
+      const fn: APIGatewayProxyHandler = () => {};
+      return FunctionDefinition.narrow_handler(x, fn);
+    })
+    .filter(isDisconnectFn);
+
+  const definitions_default = definitions_base
+    .map((x) => {
+      const fn: APIGatewayProxyWebsocketHandlerV2 = () => {};
+      return FunctionDefinition.narrow_handler(x, fn);
+    })
+    .filter(isDefaultFn);
 
   const dispatchApi: http.RequestListener = async (req, res) => {
     try {

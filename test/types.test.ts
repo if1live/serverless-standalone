@@ -89,10 +89,8 @@ describe("FunctionDefinition#narrow_handler", () => {
   };
 
   it("cast", () => {
-    const actual = FunctionDefinition.narrow_handler(
-      definition,
-      FunctionDefinition.fn_sqs,
-    );
+    const fn: SQSHandler = () => {};
+    const actual = FunctionDefinition.narrow_handler(definition, fn);
     type Actual = (typeof actual)["handler"];
     typeAssert<IsExact<Actual, SQSHandler>>(true);
   });

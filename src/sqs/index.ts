@@ -20,7 +20,6 @@ import {
   FunctionDefinition,
   FunctionEvent_SQS,
   ServiceRunner,
-  castFunctionDefinition,
 } from "../types.js";
 import * as helpers from "../helpers.js";
 
@@ -57,24 +56,19 @@ export const create = (
   // sqs와 handler는 1:1 관계로 가정
   // queue에 lambda 여러개 붙이면 어떤 람다가 호출될지 모르니까 일반적인 시나리오가 아님
   const functions = definitions
+    .map((x) => FunctionDefinition.narrow_event(x, "sqs"))
     .map((x) => {
-      const definition = castFunctionDefinition<SQSHandler>(x);
-      const events = definition.events
-        .map((x) => x.sqs)
-        .filter(R.isNot(R.isNil));
-
-      const first = events[0];
-      if (!first) {
-        return null;
-      }
-
-      return {
+      const fn: SQSHandler = () => {};
+      return FunctionDefinition.narrow_handler(x, fn);
+    })
+    .flatMap((definition) => {
+      const events = definition.events;
+      return events.map((event) => ({
         name: definition.name,
         handler: definition.handler,
-        event: first,
-      };
-    })
-    .filter(R.isNonNull);
+        event: event.sqs,
+      }));
+    });
 
   const start = async () => {
     // queue 만들기. queue 생성하면 queue url 얻을수 있다

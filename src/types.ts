@@ -97,8 +97,6 @@ export type FunctionDefinition<
   events: Event[];
 };
 
-declare const fn_sqs: SQSHandler;
-
 export const FunctionDefinition = {
   narrow_event<Handler, Event, Tag extends keyof Event>(
     self: FunctionDefinition<Handler, Event>,
@@ -125,15 +123,6 @@ export const FunctionDefinition = {
       handler: self.handler as any as HandlerNext,
     };
   },
-  fn_sqs,
-};
-
-export const castFunctionDefinition = <T>(x: FunctionDefinition) => {
-  return {
-    name: x.name,
-    events: x.events,
-    handler: x.handler as T,
-  };
 };
 
 export interface ServiceRunner {

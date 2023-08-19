@@ -1,12 +1,10 @@
 import { ScheduledEvent, ScheduledHandler } from "aws-lambda";
 import { CronJob } from "cron";
-import * as R from "remeda";
 import * as helpers from "../helpers.js";
 import {
   FunctionDefinition,
   FunctionEvent_Schedule,
   ServiceRunner,
-  castFunctionDefinition,
 } from "../types.js";
 
 export interface Options {}
@@ -15,17 +13,19 @@ export const create = (
   definitions: FunctionDefinition[],
   options: Options,
 ): ServiceRunner => {
-  const functions = definitions.flatMap((definition0) => {
-    const definition = castFunctionDefinition<ScheduledHandler>(definition0);
-    const events = definition.events
-      .map((x) => x.schedule)
-      .filter(R.isNot(R.isNil));
-    return events.map((sched) => ({
-      name: definition.name,
-      handler: definition.handler,
-      sched,
-    }));
-  });
+  const functions = definitions
+    .map((x) => FunctionDefinition.narrow_event(x, "schedule"))
+    .map((x) => {
+      const fn: ScheduledHandler = () => {};
+      return FunctionDefinition.narrow_handler(x, fn);
+    })
+    .flatMap((definition) => {
+      return definition.events.map((event) => ({
+        name: definition.name,
+        handler: definition.handler,
+        sched: event.schedule,
+      }));
+    });
 
   const jobs = functions.map(({ name, handler: f, sched }) => {
     return new CronJob(sched.rate, async () => {

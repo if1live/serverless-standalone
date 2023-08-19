@@ -7,12 +7,7 @@ import {
   APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
 import * as R from "remeda";
-import {
-  FunctionDefinition,
-  HttpMethod,
-  ServiceRunner,
-  castFunctionDefinition,
-} from "../types.js";
+import { FunctionDefinition, HttpMethod, ServiceRunner } from "../types.js";
 import * as helpers from "../helpers.js";
 import {
   MethodMatchResult,
@@ -33,14 +28,14 @@ export const create = (
 
   // 이벤트 중심으로 생각하려고 이벤트-핸들러를 1:1로 맵핑
   const functions = definitions
-    .flatMap((x) => {
-      const definition = castFunctionDefinition<APIGatewayProxyHandlerV2>(x);
-      const events = definition.events
-        .map((x) => x.httpApi)
-        .filter(R.isNot(R.isNil));
-
-      return events.map((event) => {
-        const tokens = event.route.split(" ");
+    .map((x) => FunctionDefinition.narrow_event(x, "httpApi"))
+    .map((x) => {
+      const fn: APIGatewayProxyHandlerV2 = () => {};
+      return FunctionDefinition.narrow_handler(x, fn);
+    })
+    .flatMap((definition) => {
+      return definition.events.map((event) => {
+        const tokens = event.httpApi.route.split(" ");
         const method = tokens[0] as HttpMethod;
         const path = tokens[1] as string;
 
