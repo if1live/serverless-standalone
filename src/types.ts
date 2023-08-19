@@ -88,10 +88,44 @@ export type FunctionHandler =
   | ScheduledHandler
   | UnknownHandler;
 
-export type FunctionDefinition = {
+export type FunctionDefinition<
+  Handler = FunctionHandler,
+  Event = FunctionEvent,
+> = {
   name: string;
-  handler: FunctionHandler;
-  events: FunctionEvent[];
+  handler: Handler;
+  events: Event[];
+};
+
+declare const fn_sqs: SQSHandler;
+
+export const FunctionDefinition = {
+  narrow_event<Handler, Event, Tag extends keyof Event>(
+    self: FunctionDefinition<Handler, Event>,
+    tag: Tag,
+  ): FunctionDefinition<Handler, Pick<Required<Event>, Tag>> {
+    const events = self.events
+      .filter((x) => x[tag])
+      .map((x) => {
+        const inner = x[tag] as NonNullable<Event[Tag]>;
+        const next = { [tag]: inner } as Pick<Required<Event>, Tag>;
+        return next;
+      });
+
+    return { ...self, events };
+  },
+
+  narrow_handler<HandlerNext, HandlerPrev, TEvent>(
+    self: FunctionDefinition<HandlerPrev, TEvent>,
+    _next: HandlerNext,
+  ): FunctionDefinition<HandlerNext, TEvent> {
+    return {
+      name: self.name,
+      events: self.events,
+      handler: self.handler as any as HandlerNext,
+    };
+  },
+  fn_sqs,
 };
 
 export const castFunctionDefinition = <T>(x: FunctionDefinition) => {

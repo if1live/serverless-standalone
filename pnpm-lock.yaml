@@ -49,6 +49,9 @@ devDependencies:
   '@types/ws':
     specifier: ^8.5.5
     version: 8.5.5
+  conditional-type-checks:
+    specifier: ^1.0.6
+    version: 1.0.6
   madge:
     specifier: ^6.1.0
     version: 6.1.0(typescript@5.1.6)
@@ -1663,6 +1666,10 @@ packages:
       readable-stream: 3.6.2
       typedarray: 0.0.6
     dev: false
+
+  /conditional-type-checks@1.0.6:
+    resolution: {integrity: sha512-3vyi+yNcmKq+xl1sTX7Ta+4pUvjusMYbC6FSbrS6YJV8TI51wiRn24u4bfdFVhDKKH5GtpKQzxW7bqXbPWllgQ==}
+    dev: true
 
   /cron@2.4.1:
     resolution: {integrity: sha512-ty0hUSPuENwDtIShDFxUxWEIsqiu2vhoFtt6Vwrbg4lHGtJX2/cV2p0hH6/qaEM9Pj+i6mQoau48BO5wBpkP4w==}
