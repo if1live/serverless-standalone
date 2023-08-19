@@ -6,7 +6,6 @@ import {
   APIGatewayProxyHandlerV2,
   APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
-import * as R from "remeda";
 import { FunctionDefinition, HttpMethod, ServiceRunner } from "../types.js";
 import * as helpers from "../helpers.js";
 import {
@@ -53,6 +52,28 @@ export const create = (
     })
     .sort((a, b) => PathMatcher.compare(a.matcher_path, b.matcher_path));
 
+  // 타입 추론 까다로워서 functions에 접근할수 있는곳에 배치
+  const handle_404 = (res: http.ServerResponse) => {
+    // aws lambda 규격
+    const json_standard = {
+      message: "Not Found",
+    };
+
+    // 추가 정보가 있으면 디버깅에서 편할듯
+    // serverless-standalone은 aws lambda와 똑같을 필요가 없다
+    const routes = functions.map((x) => x.event.httpApi?.route);
+
+    const json_extra = {
+      routes,
+    };
+
+    const json = {
+      ...json_standard,
+      ...json_extra,
+    };
+    return helpers.replyJson(res, 404, json);
+  };
+
   const dispatchHttp: http.RequestListener = async (req, res) => {
     // req.url에는 query string 붙어있어서 이를 떼어내는 작업이 필요
     const host = req.headers["host"] ?? "";
@@ -74,8 +95,7 @@ export const create = (
       .find((x) => x.match_method && x.match_path);
 
     if (!found) {
-      const json = { message: "Not Found" };
-      return helpers.replyJson(res, 404, json);
+      return handle_404(res, functions);
     }
 
     const event = await createEventV2(req, url, {

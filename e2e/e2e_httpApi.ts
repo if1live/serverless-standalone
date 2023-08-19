@@ -118,7 +118,7 @@ async function test_route_404() {
   const resp = await fetch(url);
   const actual = await resp.json();
   assert.equal(resp.status, 404);
-  assert.deepEqual(actual, { message: "Not Found" });
+  assert.equal(actual.message, "Not Found");
 }
 
 type DumpResult = {
