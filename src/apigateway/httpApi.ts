@@ -6,7 +6,12 @@ import {
   APIGatewayProxyHandlerV2,
   APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
-import { FunctionDefinition, HttpMethod, ServiceRunner } from "../types.js";
+import {
+  FunctionDefinition,
+  FunctionEvent,
+  HttpMethod,
+  ServiceRunner,
+} from "../types.js";
 import * as helpers from "../helpers.js";
 import {
   MethodMatchResult,
@@ -19,6 +24,11 @@ export interface Options {
   port: number;
 }
 
+type MyFunctionDefinition = FunctionDefinition<
+  APIGatewayProxyHandlerV2,
+  Pick<Required<FunctionEvent>, "httpApi">
+>;
+
 export const create = (
   definitions: FunctionDefinition[],
   options: Options,
@@ -26,12 +36,14 @@ export const create = (
   const { port } = options;
 
   // 이벤트 중심으로 생각하려고 이벤트-핸들러를 1:1로 맵핑
-  const functions = definitions
+  const functions: MyFunctionDefinition[] = definitions
     .map((x) => FunctionDefinition.narrow_event(x, "httpApi"))
     .map((x) => {
       const fn: APIGatewayProxyHandlerV2 = () => {};
       return FunctionDefinition.narrow_handler(x, fn);
-    })
+    });
+
+  const mappings = functions
     .flatMap((definition) => {
       return definition.events.map((event) => {
         const tokens = event.httpApi.route.split(" ");
@@ -52,34 +64,12 @@ export const create = (
     })
     .sort((a, b) => PathMatcher.compare(a.matcher_path, b.matcher_path));
 
-  // 타입 추론 까다로워서 functions에 접근할수 있는곳에 배치
-  const handle_404 = (res: http.ServerResponse) => {
-    // aws lambda 규격
-    const json_standard = {
-      message: "Not Found",
-    };
-
-    // 추가 정보가 있으면 디버깅에서 편할듯
-    // serverless-standalone은 aws lambda와 똑같을 필요가 없다
-    const routes = functions.map((x) => x.event.httpApi?.route);
-
-    const json_extra = {
-      routes,
-    };
-
-    const json = {
-      ...json_standard,
-      ...json_extra,
-    };
-    return helpers.replyJson(res, 404, json);
-  };
-
   const dispatchHttp: http.RequestListener = async (req, res) => {
     // req.url에는 query string 붙어있어서 이를 떼어내는 작업이 필요
     const host = req.headers["host"] ?? "";
     const url = new URL(`http://${host}${req.url}`);
 
-    const found = functions
+    const found = mappings
       .map((x) => {
         const match_method = MethodMatcher.match(x.matcher_method, req.method!);
         const match_path = PathMatcher.match(x.matcher_path, url.pathname);
@@ -95,7 +85,7 @@ export const create = (
       .find((x) => x.match_method && x.match_path);
 
     if (!found) {
-      return handle_404(res, functions);
+      return handle_notFound(res, functions);
     }
 
     const event = await createEventV2(req, url, {
@@ -105,8 +95,14 @@ export const create = (
 
     const awsRequestId = helpers.createUniqueId();
     const context = helpers.generateLambdaContext(found.name, awsRequestId);
-    const output = await found.handler(event, context, helpers.emptyCallback);
-    const result = output as APIGatewayProxyStructuredResultV2;
+
+    let result: APIGatewayProxyStructuredResultV2;
+    try {
+      const output = await found.handler(event, context, helpers.emptyCallback);
+      result = output as APIGatewayProxyStructuredResultV2;
+    } catch (e) {
+      return handle_exception(res, e);
+    }
 
     // https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html
     const isBase64Encoded = result.isBase64Encoded ?? false;
@@ -159,6 +155,57 @@ export const create = (
     start,
     stop,
   };
+};
+
+const handle_notFound = (
+  res: http.ServerResponse,
+  functions: MyFunctionDefinition[],
+) => {
+  // aws lambda 규격
+  const json_standard = {
+    message: "Not Found",
+  };
+
+  // 추가 정보가 있으면 디버깅에서 편할듯
+  // serverless-standalone은 aws lambda와 똑같을 필요가 없다
+  const routes = functions.flatMap((x) => {
+    return x.events.map((event) => event.httpApi?.route);
+  });
+
+  const json_extra = {
+    routes,
+  };
+
+  const json = {
+    ...json_standard,
+    ...json_extra,
+  };
+  return helpers.replyJson(res, 404, json);
+};
+
+const handle_exception = (res: http.ServerResponse, e: unknown) => {
+  const json_standard = {
+    message: "Internal Server Error",
+  };
+
+  let json_extra;
+  if (e instanceof Error) {
+    json_extra = {
+      error_name: e.name,
+      error_message: e.message,
+      stack: (e.stack ?? "").split("\n"),
+    };
+  } else {
+    json_extra = {
+      unknown: e,
+    };
+  }
+
+  const json = {
+    ...json_standard,
+    ...json_extra,
+  };
+  return helpers.replyJson(res, 500, json);
 };
 
 async function createEventV2(

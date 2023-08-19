@@ -193,6 +193,17 @@ async function test_binary() {
   assert.equal(message, "hello");
 }
 
+const http_exception: APIGatewayProxyHandlerV2 = async (event, context) => {
+  throw new Error("sample");
+};
+async function test_exception() {
+  const url = `${endpoint}/exception`;
+  const resp = await fetch(url);
+  const json = await resp.json();
+  assert.equal(resp.status, 500);
+  assert.equal(json.message, "Internal Server Error");
+}
+
 export const definitions: FunctionDefinition[] = [
   {
     name: "http_fixed",
@@ -229,6 +240,11 @@ export const definitions: FunctionDefinition[] = [
     handler: http_binary,
     events: [{ httpApi: { route: "ANY /binary" } }],
   },
+  {
+    name: "http_exception",
+    handler: http_exception,
+    events: [{ httpApi: { route: "ANY /exception" } }],
+  },
 ];
 
 const inst = standalone({
@@ -257,4 +273,6 @@ describe("http", () => {
   describe("http#binary", () => {
     it("binary", async () => test_binary());
   });
+
+  it("exception", async () => test_exception());
 });
