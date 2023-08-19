@@ -14,6 +14,9 @@ dependencies:
   cron:
     specifier: ^2.4.1
     version: 2.4.1
+  debug:
+    specifier: ^4.3.4
+    version: 4.3.4
   http-terminator:
     specifier: ^3.2.0
     version: 3.2.0
@@ -37,6 +40,9 @@ devDependencies:
   '@types/aws-lambda':
     specifier: ^8.10.119
     version: 8.10.119
+  '@types/debug':
+    specifier: ^4.1.8
+    version: 4.1.8
   '@types/node':
     specifier: ^18.17.5
     version: 18.17.5
@@ -1273,8 +1279,18 @@ packages:
     resolution: {integrity: sha512-mEo1sAde+UCE6b2hxn332f1g1E8WfYRu6p5SvTKr2ZKC1f7gFJXk4h5PyGP9Dt6gCaG8y8XhwnXWC6Iy2cmBng==}
     dev: true
 
+  /@types/debug@4.1.8:
+    resolution: {integrity: sha512-/vPO1EPOs306Cvhwv7KfVfYvOJqA/S/AXjaHQiJboCZzcNDb+TIJFN9/2C9DZ//ijSKWioNyUxD792QmDJ+HKQ==}
+    dependencies:
+      '@types/ms': 0.7.31
+    dev: true
+
   /@types/json5@0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
+    dev: true
+
+  /@types/ms@0.7.31:
+    resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
     dev: true
 
   /@types/node@18.17.5:

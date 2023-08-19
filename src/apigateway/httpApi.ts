@@ -37,7 +37,6 @@ export const create = (
       const definition = castFunctionDefinition<APIGatewayProxyHandlerV2>(x);
       const events = definition.events
         .map((x) => x.httpApi)
-        .filter((httpApi) => httpApi?.enabled ?? true)
         .filter(R.isNot(R.isNil));
 
       return events.map((event) => {

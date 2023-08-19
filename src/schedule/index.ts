@@ -19,7 +19,6 @@ export const create = (
     const definition = castFunctionDefinition<ScheduledHandler>(definition0);
     const events = definition.events
       .map((x) => x.schedule)
-      .filter((schedule) => schedule?.enabled ?? true)
       .filter(R.isNot(R.isNil));
     return events.map((sched) => ({
       name: definition.name,

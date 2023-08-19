@@ -33,6 +33,7 @@
   "dependencies": {
     "@aws-sdk/client-sqs": "~3.188.0",
     "cron": "^2.4.1",
+    "debug": "^4.3.4",
     "http-terminator": "^3.2.0",
     "mqtt": "^5.0.2",
     "remeda": "^1.24.1",
@@ -42,6 +43,7 @@
     "@aws-sdk/client-apigatewaymanagementapi": "~3.188.0",
     "@aws-sdk/client-lambda": "~3.188.0",
     "@types/aws-lambda": "^8.10.119",
+    "@types/debug": "^4.1.8",
     "@types/node": "^18.17.5",
     "@types/ws": "^8.5.5",
     "madge": "^6.1.0",

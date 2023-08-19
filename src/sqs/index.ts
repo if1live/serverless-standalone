@@ -61,7 +61,6 @@ export const create = (
       const definition = castFunctionDefinition<SQSHandler>(x);
       const events = definition.events
         .map((x) => x.sqs)
-        .filter((sqs) => sqs?.enabled ?? true)
         .filter(R.isNot(R.isNil));
 
       const first = events[0];

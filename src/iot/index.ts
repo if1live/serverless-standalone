@@ -21,10 +21,7 @@ export const create = (
   const functions = definitions.flatMap((x) => {
     const definition = castFunctionDefinition<IoTHandler>(x);
 
-    const events = definition.events
-      .map((x) => x.iot)
-      .filter((iot) => iot?.enabled ?? true)
-      .filter(R.isNot(R.isNil));
+    const events = definition.events.map((x) => x.iot).filter(R.isNot(R.isNil));
     return events.map((iot) => ({
       name: definition.name,
       handler: definition.handler,
