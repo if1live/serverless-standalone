@@ -29,26 +29,16 @@ function touchSocket(sock: MyWebSocket) {
   sock.lastActiveAt = new Date();
 }
 
-function isEnabledEvent(x: FunctionEvent_WebSocket): boolean {
-  return x.enabled ?? true;
-}
-
 const isConnectFn = (x: FunctionDefinition) => {
-  return x.events.some(
-    (x) => x.websocket?.route === "$connect" && isEnabledEvent(x.websocket),
-  );
+  return x.events.some((x) => x.websocket?.route === "$connect");
 };
 
 const isDisconnectFn = (x: FunctionDefinition) => {
-  return x.events.some(
-    (x) => x.websocket?.route === "$disconnect" && isEnabledEvent(x.websocket),
-  );
+  return x.events.some((x) => x.websocket?.route === "$disconnect");
 };
 
 const isDefaultFn = (x: FunctionDefinition) => {
-  return x.events.some(
-    (x) => x.websocket?.route === "$default" && isEnabledEvent(x.websocket),
-  );
+  return x.events.some((x) => x.websocket?.route === "$default");
 };
 
 const sockets = new Map<string, MyWebSocket>();

@@ -3,7 +3,7 @@ import * as schedule from "./schedule/index.js";
 import * as lambda from "./lambda/index.js";
 import * as iot from "./iot/index.js";
 import * as sqs from "./sqs/index.js";
-import { FunctionDefinition, ServiceRunner } from "./types.js";
+import { FunctionDefinition, FunctionEvent, ServiceRunner } from "./types.js";
 
 const mock: ServiceRunner = {
   start() {},
@@ -19,7 +19,10 @@ export function standalone(params: {
   sqs?: sqs.Options;
   iot?: iot.Options;
 }) {
-  const { functions } = params;
+  const functions = params.functions.map((x) => {
+    const events = x.events.filter((e) => FunctionEvent.isEnabled(e));
+    return { ...x, events };
+  });
 
   // TODO: 핸들러 없으면 건너뛰도록
   const inst_httpApi = params.httpApi
