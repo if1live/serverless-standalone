@@ -24,6 +24,11 @@ export function replyJson(
 ) {
   res.statusCode = statusCode;
   res.setHeader("Content-Type", "text/application");
+  res.setHeader("x-amz-cf-id", uuid());
+  res.setHeader("x-amzn-request-id", uuid());
+  // TODO: extended request id?
+  // res.setHeader("x-amzn-extended-request-id", "TODO");
+
   res.end(JSON.stringify(data));
 }
 
