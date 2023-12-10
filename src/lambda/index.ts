@@ -92,7 +92,7 @@ export const create = (
 };
 
 /** POST /2015-03-31/functions/lambda_simple/invocations */
-const re_invoke = /^\/2015-03-31\/functions\/([a-zA-Z0-0_]+)\/invocations$/;
+const re_invoke = /^\/2015-03-31\/functions\/([a-zA-Z0-9_-]+)\/invocations$/;
 
 const parseRequest_invoke = (
   req: Pick<http.IncomingMessage, "method" | "url" | "headers">,

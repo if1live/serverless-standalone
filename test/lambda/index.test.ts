@@ -6,7 +6,7 @@ describe("parse", () => {
   it("invoke", () => {
     const req: Pick<http.IncomingMessage, "method" | "url" | "headers"> = {
       method: "POST",
-      url: "/2015-03-31/functions/lambda_simple/invocations",
+      url: "/2015-03-31/functions/toki-example-dev-sqsMain-01/invocations",
       headers: {
         "x-amz-invocation-type": "RequestResponse",
       },
@@ -14,6 +14,6 @@ describe("parse", () => {
     const actual = parseRequest(req);
 
     assert.equal(actual?._tag, "invoke");
-    assert.equal(actual?.functionName, "lambda_simple");
+    assert.equal(actual?.functionName, "toki-example-dev-sqsMain-01");
   });
 });
