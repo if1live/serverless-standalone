@@ -47,9 +47,9 @@ export const create = (
 ): ServiceRunner => {
   const { port } = options;
 
-  const definitions_base = definitions.map((x) =>
-    FunctionDefinition.narrow_event(x, "websocket"),
-  );
+  const definitions_base = definitions
+    .map((x) => FunctionDefinition.dropDisabledEvent(x))
+    .map((x) => FunctionDefinition.narrow_event(x, "websocket"));
 
   const definitions_connect = definitions_base
     .map((x) => {

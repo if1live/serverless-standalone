@@ -3,7 +3,7 @@ import * as schedule from "./schedule/index.js";
 import * as lambda from "./lambda/index.js";
 import * as iot from "./iot/index.js";
 import * as sqs from "./sqs/index.js";
-import { FunctionDefinition, FunctionEvent, ServiceRunner } from "./types.js";
+import { FunctionDefinition, ServiceRunner } from "./types.js";
 
 const mock: ServiceRunner = {
   start() {},
@@ -19,10 +19,9 @@ export function standalone(params: {
   sqs?: sqs.Options;
   iot?: iot.Options;
 }) {
-  const functions = params.functions.map((x) => {
-    const events = x.events.filter((e) => FunctionEvent.isEnabled(e));
-    return { ...x, events };
-  });
+  // lambda list function에서는 disabled된 이벤트 목록도 접근할 수 있어야한다.
+  // 이벤트 비활성화 처리는 하위에서 알아서 처리하도록 한다.
+  const functions = params.functions;
 
   // TODO: 핸들러 없으면 건너뛰도록
   const inst_httpApi = params.httpApi

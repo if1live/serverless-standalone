@@ -37,6 +37,7 @@ export const create = (
 
   // 이벤트 중심으로 생각하려고 이벤트-핸들러를 1:1로 맵핑
   const functions: MyFunctionDefinition[] = definitions
+    .map((x) => FunctionDefinition.dropDisabledEvent(x))
     .map((x) => FunctionDefinition.narrow_event(x, "httpApi"))
     .map((x) => {
       const fn: APIGatewayProxyHandlerV2 = () => {};

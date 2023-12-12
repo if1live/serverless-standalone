@@ -14,6 +14,7 @@ export const create = (
   options: Options,
 ): ServiceRunner => {
   const functions = definitions
+    .map((x) => FunctionDefinition.dropDisabledEvent(x))
     .map((x) => FunctionDefinition.narrow_event(x, "schedule"))
     .map((x) => {
       const fn: ScheduledHandler = () => {};

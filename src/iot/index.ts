@@ -15,6 +15,7 @@ export const create = (
   const { mqtt: url } = options;
 
   const functions = definitions
+    .map((x) => FunctionDefinition.dropDisabledEvent(x))
     .map((x) => FunctionDefinition.narrow_event(x, "iot"))
     .map((x) => {
       const fn: IoTHandler = () => {};

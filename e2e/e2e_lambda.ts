@@ -68,8 +68,7 @@ export const definitions: FunctionDefinition[] = [
         sqs: {
           queueName: "world-queue",
           batchSize: 3,
-          // TODO: disabled 항목도 접근할수 있어야한다
-          // enabled: false,
+          enabled: false,
         },
       },
       {
@@ -233,9 +232,11 @@ describe("lambda", () => {
       const list = output.EventSourceMappings ?? [];
       assert.equal(list.length, 2);
 
-      const [first, _rest] = list;
+      const [first, second, _rest] = list;
       assert.ok(first);
+      assert.ok(second);
 
+      // first
       assert.equal(first.BatchSize, 2);
       assert.equal(
         first.EventSourceArn,
@@ -246,6 +247,9 @@ describe("lambda", () => {
         "arn:aws:lambda:ap-northeast-1:123456789012:function:lambda_event",
       );
       assert.equal(first.State, "Enabled");
+
+      // second
+      assert.equal(second.State, "Disabled");
     });
 
     it("function exists + no sqs", async () => {

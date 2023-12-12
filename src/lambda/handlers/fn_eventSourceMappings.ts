@@ -4,7 +4,7 @@ import {
 } from "@aws-sdk/client-lambda";
 import * as R from "remeda";
 import { Action } from "../actions.js";
-import { FunctionDefinition } from "../../types.js";
+import { FunctionDefinition, FunctionEvent } from "../../types.js";
 import * as helpers from "../../helpers.js";
 import { Req, Res, region, account } from "./types.js";
 
@@ -30,7 +30,7 @@ export class EventSourceMappingsHandler {
         const eventSourceArn = `arn:aws:sqs:${region}:${account}:${x.queueName}`;
         const functionArn = `arn:aws:lambda:${region}:${account}:function:${found.name}`;
 
-        const enabled = x.enabled ?? true;
+        const enabled = FunctionEvent.isEnabled({ sqs: x });
         const state = enabled ? "Enabled" : "Disabled";
 
         return {

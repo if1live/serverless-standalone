@@ -123,6 +123,13 @@ export const FunctionDefinition = {
       handler: self.handler as any as HandlerNext,
     };
   },
+
+  dropDisabledEvent<Handler>(
+    self: FunctionDefinition<Handler>,
+  ): FunctionDefinition<Handler> {
+    const events = self.events.filter((e) => FunctionEvent.isEnabled(e));
+    return { ...self, events };
+  },
 };
 
 export interface ServiceRunner {
