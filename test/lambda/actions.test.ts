@@ -1,6 +1,6 @@
-import { describe, it, assert } from "vitest";
 import http from "node:http";
-import { parseRequest } from "../../src/lambda/index.js";
+import { describe, it, assert } from "vitest";
+import { parseRequest } from "../../src/lambda/actions.js";
 
 describe("parse", () => {
   type Req = Pick<http.IncomingMessage, "method" | "url" | "headers">;
