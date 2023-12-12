@@ -1,5 +1,5 @@
 import { IoTHandler } from "aws-lambda";
-import mqtt from "mqtt";
+import type { MqttClient } from "mqtt";
 import * as R from "remeda";
 import { FunctionDefinition, ServiceRunner } from "../types.js";
 import * as helpers from "../helpers.js";
@@ -28,9 +28,10 @@ export const create = (
       }));
     });
 
-  let g_client: mqtt.MqttClient | null;
+  let g_client: MqttClient | null;
 
   const start = async () => {
+    const mqtt = await import("mqtt");
     const client = mqtt.connect(url);
     g_client = client;
 
