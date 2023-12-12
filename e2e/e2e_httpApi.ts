@@ -190,7 +190,7 @@ async function test_binary() {
   const arrayBuffer = await blob.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   const message = await gunzipAsync(buffer);
-  assert.equal(message, "hello");
+  assert.equal(message.toString("utf-8"), "hello");
 }
 
 const http_exception: APIGatewayProxyHandlerV2 = async (event, context) => {
