@@ -32,27 +32,27 @@
   },
   "dependencies": {
     "@aws-sdk/client-sqs": "~3.188.0",
-    "cron": "^2.4.1",
+    "cron": "^2.4.4",
     "debug": "^4.3.4",
     "http-terminator": "^3.2.0",
-    "mqtt": "^5.0.2",
-    "remeda": "^1.24.1",
-    "ws": "^8.13.0"
+    "mqtt": "^5.3.3",
+    "remeda": "^1.30.0",
+    "ws": "^8.15.0"
   },
   "devDependencies": {
     "@aws-sdk/client-apigatewaymanagementapi": "~3.188.0",
     "@aws-sdk/client-lambda": "~3.188.0",
-    "@types/aws-lambda": "^8.10.119",
-    "@types/debug": "^4.1.8",
-    "@types/node": "^18.17.5",
-    "@types/ws": "^8.5.5",
+    "@types/aws-lambda": "^8.10.130",
+    "@types/debug": "^4.1.12",
+    "@types/node": "^20.10.4",
+    "@types/ws": "^8.5.10",
     "conditional-type-checks": "^1.0.6",
     "madge": "^6.1.0",
-    "prettier": "^3.0.1",
-    "rimraf": "^5.0.1",
-    "tsx": "^3.12.7",
-    "typescript": "^5.1.6",
-    "vitest": "^0.34.1"
+    "prettier": "^3.1.1",
+    "rimraf": "^5.0.5",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4"
   },
-  "packageManager": "pnpm@8.6.7"
+  "packageManager": "pnpm@8.12.0"
 }
