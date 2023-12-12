@@ -1,6 +1,6 @@
 import mqtt from "mqtt";
 import { before, after, describe, it } from "node:test";
-import assert from "node:assert";
+import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import { IoTHandler } from "aws-lambda";
 import { standalone, type FunctionDefinition } from "../src/index.js";

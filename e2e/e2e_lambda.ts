@@ -1,4 +1,4 @@
-import assert from "node:assert";
+import assert from "node:assert/strict";
 import { describe, it, before, after, beforeEach } from "node:test";
 import {
   LambdaClient,

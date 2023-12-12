@@ -1,7 +1,7 @@
 import zlib from "node:zlib";
 import { promisify } from "node:util";
 import { after, before, describe, it } from "node:test";
-import assert from "node:assert";
+import assert from "node:assert/strict";
 import {
   APIGatewayProxyEventV2,
   APIGatewayProxyHandlerV2,

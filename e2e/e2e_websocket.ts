@@ -1,5 +1,5 @@
 import { after, before, describe, it } from "node:test";
-import assert from "node:assert";
+import assert from "node:assert/strict";
 import { WebSocket } from "ws";
 import { setTimeout as delay } from "node:timers/promises";
 import {

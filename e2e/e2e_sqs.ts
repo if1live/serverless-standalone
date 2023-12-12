@@ -1,4 +1,4 @@
-import assert from "node:assert";
+import assert from "node:assert/strict";
 import { describe, it, before, after } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
 import { SQSHandler } from "aws-lambda";

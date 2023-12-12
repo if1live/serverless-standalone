@@ -1,5 +1,5 @@
 import { after, before, describe, it } from "node:test";
-import assert from "node:assert";
+import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import { ScheduledHandler } from "aws-lambda";
 import { standalone, type FunctionDefinition } from "../src/index.js";
