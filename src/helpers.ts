@@ -3,7 +3,7 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 
 // https://stackoverflow.com/a/76356734
-export function getBody(req: http.IncomingMessage): Promise<Buffer> {
+export function getBodyBuffer(req: http.IncomingMessage): Promise<Buffer> {
   return new Promise((resolve) => {
     const bodyParts: Buffer[] = [];
     req

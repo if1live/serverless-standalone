@@ -71,7 +71,7 @@ export class InvokeHandler {
     }
 
     // TODO: 클라의 입력이 항상 json이라고 가정해도 되나?
-    const buffer = await helpers.getBody(req);
+    const buffer = await helpers.getBodyBuffer(req);
     const text = buffer.toString("utf-8");
     const event = JSON.parse(text);
 

@@ -278,7 +278,10 @@ const fn_get = async (connectionId: string, req: http.IncomingMessage) => {
 };
 const fn_post = async (connectionId: string, req: http.IncomingMessage) => {
   const sock = getOrFail(connectionId);
-  const body = await helpers.getBody(req);
+  const buffer = await helpers.getBodyBuffer(req);
+  // https://docs.aws.amazon.com/apigateway/latest/developerguide/websocket-api-develop-binary-media-types.html
+  // aws websocket api는 기본적으로 string만 지원한다.
+  const body = buffer.toString("utf-8");
   sock.send(body);
   touchSocket(sock);
   return {};

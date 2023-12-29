@@ -227,7 +227,7 @@ async function createEventV2(
   // querystring에서 ? 를 제외해야한다
   const rawQueryString = url.search.substring(1, url.search.length);
 
-  const bodyBuffer = await helpers.getBody(req);
+  const bodyBuffer = await helpers.getBodyBuffer(req);
   const body =
     bodyBuffer.byteLength > 0 ? bodyBuffer.toString("utf-8") : undefined;
 
