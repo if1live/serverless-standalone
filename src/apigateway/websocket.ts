@@ -4,6 +4,8 @@ import * as R from "remeda";
 import { WebSocketServer } from "ws";
 import {
   APIGatewayProxyHandler,
+  APIGatewayProxyResult,
+  APIGatewayProxyResultV2,
   APIGatewayProxyWebsocketHandlerV2,
 } from "aws-lambda";
 import { isArrayBuffer } from "node:util/types";
@@ -125,6 +127,48 @@ export const create = (
     sock.connectionId = connectionId;
     sockets.set(connectionId, sock);
 
+    // https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api-integration-responses.html
+    // The template selection expression, as described above, functions identically. For example:
+    // /2\d\d/: Receive and transform successful responses
+    // /4\d\d/: Receive and transform bad request errors
+    // $default: Receive and transform all unexpected responses
+    const handleResult = (
+      result: void | APIGatewayProxyResult | APIGatewayProxyResultV2<never>,
+    ) => {
+      // status code 없는 경우는 성공으로 간주
+      if (!result) {
+        return true;
+      } else if (typeof result === "string") {
+        return true;
+      } else if (!result.statusCode) {
+        return true;
+      }
+
+      const statusCode = result.statusCode;
+      if (200 <= statusCode && statusCode < 300) {
+        return true;
+      } else if (400 <= statusCode && statusCode < 500) {
+        const message = `${result.statusCode}: ${result.body}`;
+        ws.close(CLOSE_NORMAL, message);
+        return false;
+      } else {
+        const message = `${result.statusCode}: ${result.body}`;
+        ws.close(CLOSE_SERVER_ERROR, message);
+        return false;
+      }
+    };
+
+    const handleError = (e: unknown) => {
+      if (e instanceof Error) {
+        const message = `${e.name}: ${e.message}`;
+        ws.close(CLOSE_SERVER_ERROR, message);
+        return false;
+      } else {
+        ws.close(CLOSE_SERVER_ERROR, "unknown exception");
+        return false;
+      }
+    };
+
     // connect
     {
       // req.url 접근하면 "/path?foo=1&foo=2" 같이 나와서 URL로 바로 파싱 안된다
@@ -146,22 +190,10 @@ export const create = (
       const context = helpers.generateLambdaContext(name, awsRequestId);
       try {
         const result = await f(event as any, context, helpers.emptyCallback);
-        if (typeof result === "object") {
-          if (result.statusCode != 200) {
-            // code 범위는 websocket에 정의된 숫자를 써야한다
-            // http status code랑 달라서 뭐랑 맵핑해야 될지 모르겠다. 대충 땜빵
-            const message = `${result.statusCode}: ${result.body}`;
-            ws.close(CLOSE_NORMAL, message);
-          }
-        }
+        handleResult(result);
       } catch (e) {
         console.error(e);
-        if (e instanceof Error) {
-          const message = `${e.name}: ${e.message}`;
-          ws.close(CLOSE_SERVER_ERROR, message);
-        } else {
-          ws.close(CLOSE_SERVER_ERROR, "unknown exception");
-        }
+        handleError(e);
       }
     }
 
@@ -184,8 +216,10 @@ export const create = (
       const context = helpers.generateLambdaContext(name, awsRequestId);
       try {
         const result = await f(event as any, context, helpers.emptyCallback);
+        handleResult(result);
       } catch (e) {
         console.error(e);
+        handleError(e);
       }
     });
 
@@ -222,8 +256,10 @@ export const create = (
       const context = helpers.generateLambdaContext(name, awsRequestId);
       try {
         const result = await f(event as any, context, helpers.emptyCallback);
+        handleResult(result);
       } catch (e) {
         console.error(e);
+        handleError(e);
       }
     });
 
