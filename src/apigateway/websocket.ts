@@ -14,6 +14,20 @@ import { WebSocketEventFactory } from "./events.js";
 
 export const prefix = "/@connections/";
 
+// RFC에는 코드별로 이름을 붙이진 않았다.
+// https://www.rfc-editor.org/rfc/rfc6455#section-7.4.1
+// 에러코드 이름은 다른 저장소를 따라갔다.
+// https://github.com/Luka967/websocket-close-codes
+
+// Successful operation / regular socket shutdown
+const CLOSE_NORMAL = 1000;
+
+// No close code frame has been receieved
+const CLOSE_ABNORMAL = 1006;
+
+// Internal server error while operating
+const CLOSE_SERVER_ERROR = 1011;
+
 type MyWebSocket = WebSocket & {
   connectionId: string;
   connectedAt: Date;
@@ -137,11 +151,17 @@ export const create = (
             // code 범위는 websocket에 정의된 숫자를 써야한다
             // http status code랑 달라서 뭐랑 맵핑해야 될지 모르겠다. 대충 땜빵
             const message = `${result.statusCode}: ${result.body}`;
-            ws.close(1000, message);
+            ws.close(CLOSE_NORMAL, message);
           }
         }
       } catch (e) {
         console.error(e);
+        if (e instanceof Error) {
+          const message = `${e.name}: ${e.message}`;
+          ws.close(CLOSE_SERVER_ERROR, message);
+        } else {
+          ws.close(CLOSE_SERVER_ERROR, "unknown exception");
+        }
       }
     }
 
