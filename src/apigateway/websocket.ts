@@ -169,34 +169,6 @@ export const create = (
       }
     };
 
-    // connect
-    {
-      // req.url 접근하면 "/path?foo=1&foo=2" 같이 나와서 URL로 바로 파싱 안된다
-      const url = new URL("http://localhost" + req.url);
-
-      const event = WebSocketEventFactory.connect({
-        connectedAt,
-        connectionId,
-        port,
-        searchParams: url.searchParams,
-      });
-
-      if (!definition_connect) {
-        return;
-      }
-
-      const { handler: f, name } = definition_connect;
-      const awsRequestId = helpers.createUniqueId();
-      const context = helpers.generateLambdaContext(name, awsRequestId);
-      try {
-        const result = await f(event as any, context, helpers.emptyCallback);
-        handleResult(result);
-      } catch (e) {
-        console.error(e);
-        handleError(e);
-      }
-    }
-
     ws.on("close", async () => {
       // TODO: 종료코드?
       const event = WebSocketEventFactory.disconnect({
@@ -267,6 +239,35 @@ export const create = (
     ws.on("pong", () => touchSocket(sock));
 
     ws.on("error", console.error);
+
+    // 핸들러 등록이 다 끝난 다음에 connect 처리해야한다.
+    // 순서를 반대로 쓰면 클라에서 onopen에서 메세지를 보냈는데 서버측에 핸들러가 등록되지 않아서 놓칠 수 있다.
+    {
+      // req.url 접근하면 "/path?foo=1&foo=2" 같이 나와서 URL로 바로 파싱 안된다
+      const url = new URL("http://localhost" + req.url);
+
+      const event = WebSocketEventFactory.connect({
+        connectedAt,
+        connectionId,
+        port,
+        searchParams: url.searchParams,
+      });
+
+      if (!definition_connect) {
+        return;
+      }
+
+      const { handler: f, name } = definition_connect;
+      const awsRequestId = helpers.createUniqueId();
+      const context = helpers.generateLambdaContext(name, awsRequestId);
+      try {
+        const result = await f(event as any, context, helpers.emptyCallback);
+        handleResult(result);
+      } catch (e) {
+        console.error(e);
+        handleError(e);
+      }
+    }
   });
 
   const start = async () => {
