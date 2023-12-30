@@ -132,6 +132,14 @@ export const create = (
       const context = helpers.generateLambdaContext(name, awsRequestId);
       try {
         const result = await f(event as any, context, helpers.emptyCallback);
+        if (typeof result === "object") {
+          if (result.statusCode != 200) {
+            // code 범위는 websocket에 정의된 숫자를 써야한다
+            // http status code랑 달라서 뭐랑 맵핑해야 될지 모르겠다. 대충 땜빵
+            const message = `${result.statusCode}: ${result.body}`;
+            ws.close(1000, message);
+          }
+        }
       } catch (e) {
         console.error(e);
       }
