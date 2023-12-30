@@ -1,5 +1,6 @@
 import http from "node:http";
 import { createHttpTerminator } from "http-terminator";
+import * as R from "remeda";
 import { WebSocketServer } from "ws";
 import {
   APIGatewayProxyHandler,
@@ -51,26 +52,32 @@ export const create = (
     .map((x) => FunctionDefinition.dropDisabledEvent(x))
     .map((x) => FunctionDefinition.narrow_event(x, "websocket"));
 
-  const definitions_connect = definitions_base
-    .map((x) => {
-      const fn: APIGatewayProxyHandler = () => {};
-      return FunctionDefinition.narrow_handler(x, fn);
-    })
-    .filter(isConnectFn);
+  // 타입 정의때문에 만든 빈 함수
+  const handler_v1: APIGatewayProxyHandler = () => {};
+  const handler_websocket_v2: APIGatewayProxyWebsocketHandlerV2 = () => {};
 
-  const definitions_disconnect = definitions_base
-    .map((x) => {
-      const fn: APIGatewayProxyHandler = () => {};
-      return FunctionDefinition.narrow_handler(x, fn);
-    })
-    .filter(isDisconnectFn);
+  // connect, disconnect, default 핸들러는 0~1개로 보장된다.
+  // custom route는 많아질수 있는데 그건 나중에 생각해도 되는 스펙
+  const definition_connect = R.pipe(
+    definitions_base,
+    R.filter(isConnectFn),
+    R.map((x) => FunctionDefinition.narrow_handler(x, handler_v1)),
+    R.first(),
+  );
 
-  const definitions_default = definitions_base
-    .map((x) => {
-      const fn: APIGatewayProxyWebsocketHandlerV2 = () => {};
-      return FunctionDefinition.narrow_handler(x, fn);
-    })
-    .filter(isDefaultFn);
+  const definition_disconnect = R.pipe(
+    definitions_base,
+    R.filter(isDisconnectFn),
+    R.map((x) => FunctionDefinition.narrow_handler(x, handler_v1)),
+    R.first(),
+  );
+
+  const definition_default = R.pipe(
+    definitions_base,
+    R.filter(isDefaultFn),
+    R.map((x) => FunctionDefinition.narrow_handler(x, handler_websocket_v2)),
+    R.first(),
+  );
 
   const dispatchApi: http.RequestListener = async (req, res) => {
     try {
@@ -116,18 +123,18 @@ export const create = (
         searchParams: url.searchParams,
       });
 
-      await Promise.all(
-        definitions_connect.map(async (definition) => {
-          const { handler: f, name } = definition;
-          const awsRequestId = helpers.createUniqueId();
-          const context = helpers.generateLambdaContext(name, awsRequestId);
-          try {
-            await f(event as any, context, helpers.emptyCallback);
-          } catch (e) {
-            console.error(e);
-          }
-        }),
-      );
+      if (!definition_connect) {
+        return;
+      }
+
+      const { handler: f, name } = definition_connect;
+      const awsRequestId = helpers.createUniqueId();
+      const context = helpers.generateLambdaContext(name, awsRequestId);
+      try {
+        const result = await f(event as any, context, helpers.emptyCallback);
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     ws.on("close", async () => {
@@ -140,18 +147,18 @@ export const create = (
         reason: "",
       });
 
-      await Promise.all(
-        definitions_disconnect.map(async (definition) => {
-          const { handler: f, name } = definition;
-          const awsRequestId = helpers.createUniqueId();
-          const context = helpers.generateLambdaContext(name, awsRequestId);
-          try {
-            await f(event as any, context, helpers.emptyCallback);
-          } catch (e) {
-            console.error(e);
-          }
-        }),
-      );
+      if (!definition_disconnect) {
+        return;
+      }
+
+      const { handler: f, name } = definition_disconnect;
+      const awsRequestId = helpers.createUniqueId();
+      const context = helpers.generateLambdaContext(name, awsRequestId);
+      try {
+        const result = await f(event as any, context, helpers.emptyCallback);
+      } catch (e) {
+        console.error(e);
+      }
     });
 
     ws.on("message", async (data) => {
@@ -178,18 +185,18 @@ export const create = (
         message,
       });
 
-      await Promise.all(
-        definitions_default.map(async (definition) => {
-          const { handler: f, name } = definition;
-          const awsRequestId = helpers.createUniqueId();
-          const context = helpers.generateLambdaContext(name, awsRequestId);
-          try {
-            await f(event as any, context, helpers.emptyCallback);
-          } catch (e) {
-            console.error(e);
-          }
-        }),
-      );
+      if (!definition_default) {
+        return;
+      }
+
+      const { handler: f, name } = definition_default;
+      const awsRequestId = helpers.createUniqueId();
+      const context = helpers.generateLambdaContext(name, awsRequestId);
+      try {
+        const result = await f(event as any, context, helpers.emptyCallback);
+      } catch (e) {
+        console.error(e);
+      }
     });
 
     ws.on("ping", () => touchSocket(sock));
