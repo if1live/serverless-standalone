@@ -106,7 +106,7 @@ describe("websocket", () => {
   it("open", async () => {
     ws = new WebSocket("ws://127.0.0.1:9001");
 
-    const p = new Promise((resolve) => {
+    const p = new Promise((resolve, reject) => {
       const message_onopen = "initial";
 
       ws.onopen = (evt) => {
@@ -128,15 +128,18 @@ describe("websocket", () => {
         });
 
       ws.onmessage = (evt) => {
-        if (Buffer.isBuffer(evt.data)) {
-          const text = evt.data.toString("utf-8");
-          if (text === message_onopen) {
-            resolve(true);
-          } else {
-            console.log("message", text);
-          }
+        let text: string | undefined;
+        if (typeof evt.data === "string") {
+          text = evt.data;
+        } else if (Buffer.isBuffer(evt.data)) {
+          text = evt.data.toString("utf-8");
+        }
+
+        if (text === message_onopen) {
+          resolve(true);
         } else {
-          console.log("message", evt.data);
+          console.log("message", text);
+          reject(new Error("unexpected message"));
         }
       };
     });
