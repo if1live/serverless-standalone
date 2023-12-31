@@ -37,6 +37,9 @@ devDependencies:
   '@aws-sdk/client-lambda':
     specifier: ~3.188.0
     version: 3.188.0
+  '@faker-js/faker':
+    specifier: ^8.3.1
+    version: 8.3.1
   '@types/aws-lambda':
     specifier: ^8.10.130
     version: 8.10.130
@@ -1194,6 +1197,11 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@faker-js/faker@8.3.1:
+    resolution: {integrity: sha512-FdgpFxY6V6rLZE9mmIBb9hM0xpfvQOSNOLnzolzKwsE1DH+gC7lEKV1p1IbR0lAYyvYd5a4u3qWJzowUkw1bIw==}
+    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0, npm: '>=6.14.13'}
+    dev: true
 
   /@isaacs/cliui@8.0.2:
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}

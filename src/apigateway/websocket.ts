@@ -232,8 +232,6 @@ export const create = (
       try {
         const result = await f(event as any, context, helpers.emptyCallback);
       } catch (e) {
-        console.error(e);
-
         const err = e as Error;
         const payload = {
           message: "Internal server error",
