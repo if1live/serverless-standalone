@@ -24,6 +24,7 @@
     "check:watch": "tsc --watch",
     "clean": "rimraf dist",
     "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "fix": "biome check --apply-unsafe .",
     "lint": "biome check .",
     "circularDepCheck": "madge --circular src"
@@ -49,6 +50,7 @@
     "@types/debug": "^4.1.12",
     "@types/node": "^20.10.4",
     "@types/ws": "^8.5.10",
+    "@vitest/coverage-v8": "^1.1.1",
     "conditional-type-checks": "^1.0.6",
     "madge": "^6.1.0",
     "rimraf": "^5.0.5",
