@@ -1,18 +1,18 @@
-import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { WebSocket } from "ws";
+import { after, before, describe, it } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
+import {
+  ApiGatewayManagementApiClient,
+  DeleteConnectionCommand,
+  GetConnectionCommand,
+  PostToConnectionCommand,
+} from "@aws-sdk/client-apigatewaymanagementapi";
 import {
   APIGatewayProxyHandler,
   APIGatewayProxyWebsocketHandlerV2,
 } from "aws-lambda";
-import {
-  ApiGatewayManagementApiClient,
-  PostToConnectionCommand,
-  DeleteConnectionCommand,
-  GetConnectionCommand,
-} from "@aws-sdk/client-apigatewaymanagementapi";
-import { standalone, type FunctionDefinition } from "../src/index.js";
+import { WebSocket } from "ws";
+import { type FunctionDefinition, standalone } from "../src/index.js";
 
 const client = new ApiGatewayManagementApiClient({
   region: "ap-northeast-1",

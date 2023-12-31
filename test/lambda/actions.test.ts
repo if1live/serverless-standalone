@@ -1,5 +1,5 @@
 import http from "node:http";
-import { describe, it, assert } from "vitest";
+import { assert, describe, it } from "vitest";
 import { parseRequest } from "../../src/lambda/actions.js";
 
 describe("parse", () => {

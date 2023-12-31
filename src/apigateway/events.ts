@@ -1,9 +1,9 @@
-import * as helpers from "../helpers.js";
 import {
   APIGatewayEventIdentity,
   APIGatewayEventRequestContext,
   APIGatewayEventWebsocketRequestContextV2,
 } from "aws-lambda";
+import * as helpers from "../helpers.js";
 
 function generateRequestContext_connect(params: {
   connectionId: string;

@@ -1,8 +1,8 @@
-import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { after, before, describe, it } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
 import { ScheduledHandler } from "aws-lambda";
-import { standalone, type FunctionDefinition } from "../src/index.js";
+import { type FunctionDefinition, standalone } from "../src/index.js";
 
 let counter = 0;
 const schedule_simple: ScheduledHandler = async (event, context) => {

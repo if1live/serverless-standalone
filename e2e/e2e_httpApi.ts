@@ -1,14 +1,14 @@
-import zlib from "node:zlib";
-import { promisify } from "node:util";
-import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { after, before, describe, it } from "node:test";
+import { promisify } from "node:util";
+import zlib from "node:zlib";
 import {
   APIGatewayProxyEventV2,
   APIGatewayProxyHandlerV2,
   APIGatewayProxyResultV2,
 } from "aws-lambda";
-import { FunctionDefinition } from "../src/types.js";
 import { standalone } from "../src/index.js";
+import { FunctionDefinition } from "../src/types.js";
 
 const endpoint = "http://127.0.0.1:9000";
 

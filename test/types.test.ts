@@ -1,6 +1,6 @@
-import { describe, it, assert } from "vitest";
-import { assert as typeAssert, IsExact } from "conditional-type-checks";
 import { APIGatewayProxyHandler, SQSHandler } from "aws-lambda";
+import { assert as typeAssert, IsExact } from "conditional-type-checks";
+import { assert, describe, it } from "vitest";
 import {
   FunctionDefinition,
   FunctionEvent,

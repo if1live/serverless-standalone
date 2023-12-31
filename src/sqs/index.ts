@@ -1,3 +1,12 @@
+import { setTimeout as delay } from "node:timers/promises";
+import {
+  CreateQueueCommand,
+  DeleteMessageBatchCommand,
+  DeleteMessageBatchRequestEntry,
+  Message,
+  ReceiveMessageCommand,
+  SQSClient,
+} from "@aws-sdk/client-sqs";
 import {
   SQSEvent,
   SQSHandler,
@@ -6,22 +15,13 @@ import {
   SQSRecord,
   SQSRecordAttributes,
 } from "aws-lambda";
-import { setTimeout as delay } from "node:timers/promises";
 import * as R from "remeda";
-import {
-  SQSClient,
-  CreateQueueCommand,
-  ReceiveMessageCommand,
-  Message,
-  DeleteMessageBatchCommand,
-  DeleteMessageBatchRequestEntry,
-} from "@aws-sdk/client-sqs";
+import * as helpers from "../helpers.js";
 import {
   FunctionDefinition,
   FunctionEvent_SQS,
   ServiceRunner,
 } from "../types.js";
-import * as helpers from "../helpers.js";
 
 interface Element {
   name: string;

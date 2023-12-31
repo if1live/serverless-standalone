@@ -1,6 +1,6 @@
-import { Context } from "aws-lambda";
-import http from "node:http";
 import { randomUUID } from "node:crypto";
+import http from "node:http";
+import { Context } from "aws-lambda";
 
 // https://stackoverflow.com/a/76356734
 export function getBodyBuffer(req: http.IncomingMessage): Promise<Buffer> {

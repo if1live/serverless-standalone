@@ -1,17 +1,18 @@
 import http from "node:http";
-import { createHttpTerminator } from "http-terminator";
-import * as R from "remeda";
-import { WebSocketServer, VerifyClientCallbackAsync } from "ws";
-import {
-  APIGatewayProxyHandler,
-  APIGatewayProxyResult,
-  APIGatewayProxyResultV2,
-  APIGatewayProxyWebsocketHandlerV2,
-} from "aws-lambda";
 import { isArrayBuffer } from "node:util/types";
 import type { GetConnectionResponse } from "@aws-sdk/client-apigatewaymanagementapi";
-import { AwsApiHandler, FunctionDefinition, ServiceRunner } from "../types.js";
+import {
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
+  APIGatewayProxyResultV2,
+  APIGatewayProxyWebsocketEventV2,
+  Context,
+} from "aws-lambda";
+import { createHttpTerminator } from "http-terminator";
+import * as R from "remeda";
+import { VerifyClientCallbackAsync, WebSocketServer } from "ws";
 import * as helpers from "../helpers.js";
+import { AwsApiHandler, FunctionDefinition, ServiceRunner } from "../types.js";
 import { WebSocketEventFactory } from "./events.js";
 
 export const prefix = "/@connections/";

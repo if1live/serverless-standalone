@@ -1,7 +1,7 @@
 import { httpApi, websocket } from "./apigateway/index.js";
-import * as schedule from "./schedule/index.js";
-import * as lambda from "./lambda/index.js";
 import * as iot from "./iot/index.js";
+import * as lambda from "./lambda/index.js";
+import * as schedule from "./schedule/index.js";
 import * as sqs from "./sqs/index.js";
 import { FunctionDefinition, ServiceRunner } from "./types.js";
 

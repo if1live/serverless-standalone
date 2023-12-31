@@ -1,5 +1,5 @@
-import { describe, it, assert } from "vitest";
 import * as R from "remeda";
+import { assert, describe, it } from "vitest";
 import {
   MethodMatcher,
   PathMatcher,

@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
-import { describe, it, before, after, beforeEach } from "node:test";
+import { after, before, beforeEach, describe, it } from "node:test";
 import {
-  LambdaClient,
   InvocationType,
   InvokeCommand,
   InvokeCommandOutput,
+  LambdaClient,
   ListEventSourceMappingsCommand,
-  ListFunctionsCommand,
   ListFunctionUrlConfigsCommand,
+  ListFunctionsCommand,
 } from "@aws-sdk/client-lambda";
 import { Context } from "aws-lambda";
 import { FunctionDefinition, standalone } from "../src/index.js";

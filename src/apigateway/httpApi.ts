@@ -1,18 +1,18 @@
 import http from "node:http";
-import { createHttpTerminator } from "http-terminator";
 import {
   APIGatewayEventRequestContextV2,
   APIGatewayProxyEventV2,
   APIGatewayProxyHandlerV2,
   APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
+import { createHttpTerminator } from "http-terminator";
+import * as helpers from "../helpers.js";
 import {
   FunctionDefinition,
   FunctionEvent,
   HttpMethod,
   ServiceRunner,
 } from "../types.js";
-import * as helpers from "../helpers.js";
 import {
   MethodMatchResult,
   MethodMatcher,

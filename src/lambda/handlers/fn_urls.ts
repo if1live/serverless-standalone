@@ -5,8 +5,8 @@ import {
 import * as R from "remeda";
 import * as helpers from "../../helpers.js";
 import { FunctionDefinition } from "../../types.js";
-import { Req, Res, region, account } from "./types.js";
 import { Action } from "../actions.js";
+import { Req, Res, account, region } from "./types.js";
 
 export class UrlsHandler {
   constructor(readonly definitions: FunctionDefinition[]) {}

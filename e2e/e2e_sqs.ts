@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { describe, it, before, after } from "node:test";
+import { after, before, describe, it } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
-import { SQSHandler } from "aws-lambda";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { standalone, type FunctionDefinition } from "../src/index.js";
+import { SQSHandler } from "aws-lambda";
+import { type FunctionDefinition, standalone } from "../src/index.js";
 
 // elasticmq
 export const endpoint = "http://127.0.0.1:9324";

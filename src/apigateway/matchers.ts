@@ -1,5 +1,5 @@
-import { HttpMethod } from "../types.js";
 import * as R from "remeda";
+import { HttpMethod } from "../types.js";
 
 export type MethodMatcher_Exact = {
   _tag: "exact";

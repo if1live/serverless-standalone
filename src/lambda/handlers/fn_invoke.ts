@@ -1,9 +1,9 @@
 import http from "node:http";
 import { Context } from "aws-lambda";
-import { FunctionDefinition, UnknownHandler } from "../../types.js";
 import * as helpers from "../../helpers.js";
-import { Req, Res } from "./types.js";
+import { FunctionDefinition, UnknownHandler } from "../../types.js";
 import { Action } from "../actions.js";
+import { Req, Res } from "./types.js";
 
 type Invocation = {
   handler: UnknownHandler;

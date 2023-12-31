@@ -1,9 +1,9 @@
-import { APIGatewayProxyHandler } from "aws-lambda";
 import { faker } from "@faker-js/faker";
-import { describe, it, assert, beforeAll, afterAll } from "vitest";
+import { APIGatewayProxyHandler } from "aws-lambda";
+import { assert, afterAll, beforeAll, describe, it } from "vitest";
+import WebSocket from "ws";
 import { create } from "../../src/apigateway/websocket.js";
 import { FunctionDefinition } from "../../src/types.js";
-import WebSocket from "ws";
 
 const createFn_status = (status: number): APIGatewayProxyHandler => {
   return async (event, context) => {
