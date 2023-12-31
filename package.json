@@ -24,7 +24,8 @@
     "check:watch": "tsc --watch",
     "clean": "rimraf dist",
     "test": "vitest run",
-    "fix": "prettier --write \"**/*.{ts,mjs,md}\"",
+    "fix": "biome check --apply-unsafe .",
+    "lint": "biome check .",
     "circularDepCheck": "madge --circular src"
   },
   "resolutions": {
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@aws-sdk/client-apigatewaymanagementapi": "~3.188.0",
     "@aws-sdk/client-lambda": "~3.188.0",
+    "@biomejs/biome": "^1.4.1",
     "@faker-js/faker": "^8.3.1",
     "@types/aws-lambda": "^8.10.130",
     "@types/debug": "^4.1.12",
@@ -49,7 +51,6 @@
     "@types/ws": "^8.5.10",
     "conditional-type-checks": "^1.0.6",
     "madge": "^6.1.0",
-    "prettier": "^3.1.1",
     "rimraf": "^5.0.5",
     "tsx": "^4.6.2",
     "typescript": "^5.3.3",
