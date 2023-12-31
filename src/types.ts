@@ -31,7 +31,6 @@ export interface FunctionEvent_IoT {
 }
 
 export type HttpMethod =
-  | "*"
   | "ANY"
   | "GET"
   | "POST"

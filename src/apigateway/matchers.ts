@@ -14,7 +14,6 @@ export type MethodMatcher = MethodMatcher_Exact | MethodMatcher_Any;
 
 const method_build = (method: HttpMethod): MethodMatcher => {
   switch (method) {
-    case "*":
     case "ANY": {
       return {
         _tag: "any",

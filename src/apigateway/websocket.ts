@@ -23,14 +23,6 @@ export const prefix = "/@connections/";
 // /4\d\d/: Receive and transform bad request errors
 // $default: Receive and transform all unexpected responses
 const handleResult = (result: APIGatewayProxyResult): [boolean, number?] => {
-  // status code 없는 경우는 성공으로 간주
-  if (!result) {
-    return [true, undefined];
-  }
-  if (!result.statusCode) {
-    return [true, undefined];
-  }
-
   const statusCode = result.statusCode;
   if (200 <= statusCode && statusCode < 300) {
     return [true, undefined];
