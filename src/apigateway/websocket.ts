@@ -243,7 +243,7 @@ export const create = (
           // custom
           err_name: err.name,
           err_message: err.message,
-          err_stack: err.stack,
+          err_stack: (err.stack ?? "").split("\n").map((x) => x.trim()),
         };
         ws.send(JSON.stringify(payload));
       }
