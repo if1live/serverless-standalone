@@ -155,7 +155,6 @@ export const create = (
       const [ok, code] = handleResult(result);
       cb(ok, code);
     } catch (e) {
-      console.error(e);
       cb(false, 502);
     }
   };
