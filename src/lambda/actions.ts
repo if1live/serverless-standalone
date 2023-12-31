@@ -43,7 +43,7 @@ const parseRequest_invoke = (req: SimpleReq): Action_Invoke | undefined => {
 
     return {
       _tag: "invoke" as const,
-      functionName: m[1]!,
+      functionName: m[1] as string,
       invocationType: invocationType as InvocationType,
     };
   }
@@ -66,7 +66,7 @@ const parseRequest_urls = (req: SimpleReq): Action_Urls | undefined => {
   if (req.method === "GET" && m) {
     return {
       _tag: "urls" as const,
-      functionName: m[1]!,
+      functionName: m[1] as string,
     };
   }
 };

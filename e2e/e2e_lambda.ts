@@ -207,7 +207,7 @@ describe("lambda", () => {
         first.FunctionArn,
         "arn:aws:lambda:ap-northeast-1:123456789012:function:lambda_event",
       );
-      assert.ok(typeof first.FunctionUrl == "string");
+      assert.ok(typeof first.FunctionUrl === "string");
     });
 
     it("function exists + no httpApi", async () => {

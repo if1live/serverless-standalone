@@ -22,22 +22,20 @@ export const prefix = "/@connections/";
 // /2\d\d/: Receive and transform successful responses
 // /4\d\d/: Receive and transform bad request errors
 // $default: Receive and transform all unexpected responses
-const handleResult = (
-  result: void | APIGatewayProxyResult,
-): [boolean, number?] => {
+const handleResult = (result: APIGatewayProxyResult): [boolean, number?] => {
   // status code 없는 경우는 성공으로 간주
   if (!result) {
     return [true, undefined];
-  } else if (!result.statusCode) {
+  }
+  if (!result.statusCode) {
     return [true, undefined];
   }
 
   const statusCode = result.statusCode;
   if (200 <= statusCode && statusCode < 300) {
     return [true, undefined];
-  } else {
-    return [false, statusCode];
   }
+  return [false, statusCode];
 };
 
 type MyWebSocket = WebSocket & {
@@ -79,8 +77,18 @@ export const create = (
     .map((x) => FunctionDefinition.narrow_event(x, "websocket"));
 
   // 타입 정의때문에 만든 빈 함수
-  const handler_v1: APIGatewayProxyHandler = () => {};
-  const handler_websocket_v2: APIGatewayProxyWebsocketHandlerV2 = () => {};
+  const handler_v1 = async (
+    evt: APIGatewayProxyEvent,
+    context: Context,
+  ): Promise<APIGatewayProxyResult> => {
+    return { statusCode: 200, body: "OK" };
+  };
+  const handler_websocket_v2 = async (
+    evt: APIGatewayProxyWebsocketEventV2,
+    context: Context,
+  ): Promise<APIGatewayProxyResultV2> => {
+    return { statusCode: 200, body: "OK" };
+  };
 
   // connect, disconnect, default 핸들러는 0~1개로 보장된다.
   // custom route는 많아질수 있는데 그건 나중에 생각해도 되는 스펙
@@ -109,12 +117,11 @@ export const create = (
     try {
       if (req.url?.startsWith(prefix)) {
         return handle(req, res);
-      } else {
-        const data = {
-          message: `${req.method} ${req.url} NotFound`,
-        };
-        helpers.replyJson(res, 400, data);
       }
+      const data = {
+        message: `${req.method} ${req.url} NotFound`,
+      };
+      helpers.replyJson(res, 400, data);
     } catch (err) {
       const e = err as any;
       const status = e.status ?? e.statusCode ?? 500;
@@ -135,7 +142,7 @@ export const create = (
     (info.req as any)._connectedAt = connectedAt;
 
     // req.url 접근하면 "/path?foo=1&foo=2" 같이 나와서 URL로 바로 파싱 안된다
-    const url = new URL("http://localhost" + info.req.url);
+    const url = new URL(`http://localhost${info.req.url}`);
 
     const event = WebSocketEventFactory.connect({
       connectedAt,
@@ -152,7 +159,7 @@ export const create = (
     const awsRequestId = helpers.createUniqueId();
     const context = helpers.generateLambdaContext(name, awsRequestId);
     try {
-      const result = await f(event as any, context, helpers.emptyCallback);
+      const result = await f(event as any, context);
       const [ok, code] = handleResult(result);
       cb(ok, code);
     } catch (e) {
@@ -193,7 +200,7 @@ export const create = (
       const awsRequestId = helpers.createUniqueId();
       const context = helpers.generateLambdaContext(name, awsRequestId);
       try {
-        const result = await f(event as any, context, helpers.emptyCallback);
+        const result = await f(event as any, context);
       } catch (e) {
         console.error(e);
       }
@@ -209,7 +216,7 @@ export const create = (
         // https://miguelmota.com/bytes/arraybuffer-to-buffer/
         const buffer = Buffer.alloc(data.byteLength);
         const view = new Uint8Array(data);
-        for (var i = 0; i < buffer.length; ++i) {
+        for (let i = 0; i < buffer.length; ++i) {
           (buffer as any)[i] = view[i];
         }
         message = buffer;
@@ -231,7 +238,7 @@ export const create = (
       const awsRequestId = helpers.createUniqueId();
       const context = helpers.generateLambdaContext(name, awsRequestId);
       try {
-        const result = await f(event as any, context, helpers.emptyCallback);
+        const result = await f(event as any, context);
       } catch (e) {
         const err = e as Error;
         const payload = {
@@ -345,7 +352,7 @@ const fn_post = async (connectionId: string, req: http.IncomingMessage) => {
 const fn_delete = async (
   connectionId: string,
   req: http.IncomingMessage,
-): Promise<{}> => {
+): Promise<object> => {
   const sock = getOrFail(connectionId);
   sock.close();
   sockets.delete(connectionId);

@@ -29,7 +29,7 @@ let invoked_disconnect = false;
 let invoked_message = false;
 
 const websocket_connect: APIGatewayProxyHandler = async (event, context) => {
-  const connectionId = event.requestContext.connectionId!;
+  const connectionId = event.requestContext.connectionId as string;
   g_connectionId = connectionId;
   invoked_connect = true;
 
@@ -42,7 +42,7 @@ const websocket_connect: APIGatewayProxyHandler = async (event, context) => {
 };
 
 const websocket_disconnect: APIGatewayProxyHandler = async (event, context) => {
-  const connectionId = event.requestContext.connectionId!;
+  const connectionId = event.requestContext.connectionId as string;
   g_connectionId = null;
   invoked_disconnect = true;
 
@@ -55,7 +55,7 @@ const websocket_message: APIGatewayProxyWebsocketHandlerV2 = async (
   event,
   context,
 ) => {
-  const connectionId = event.requestContext.connectionId!;
+  const connectionId = event.requestContext.connectionId as string;
   invoked_message = true;
 
   console.log("message", {
@@ -151,7 +151,7 @@ describe("websocket", () => {
   it("PostToConnection: string", async () => {
     const output = await client.send(
       new PostToConnectionCommand({
-        ConnectionId: g_connectionId!,
+        ConnectionId: g_connectionId as string,
         Data: new TextEncoder().encode("hello"),
       }),
     );
@@ -164,7 +164,7 @@ describe("websocket", () => {
 
     const output = await client.send(
       new PostToConnectionCommand({
-        ConnectionId: g_connectionId!,
+        ConnectionId: g_connectionId as string,
         Data: data,
       }),
     );
@@ -173,7 +173,7 @@ describe("websocket", () => {
   it("GetConnection", async () => {
     const output = await client.send(
       new GetConnectionCommand({
-        ConnectionId: g_connectionId!,
+        ConnectionId: g_connectionId as string,
       }),
     );
     assert.equal(output.ConnectedAt instanceof Date, true);
@@ -183,7 +183,7 @@ describe("websocket", () => {
   it("DeleteConnection", async () => {
     const output = await client.send(
       new DeleteConnectionCommand({
-        ConnectionId: g_connectionId!,
+        ConnectionId: g_connectionId as string,
       }),
     );
 

@@ -22,7 +22,7 @@ export class UrlsHandler {
       .filter(R.isNot(R.isNil))
       .map((x): FunctionUrlConfig => {
         const functionArn = `arn:aws:lambda:${region}:${account}:function:${found.name}`;
-        const functionUrl = `http://127.0.0.1:3000/`;
+        const functionUrl = "http://127.0.0.1:3000/";
 
         // TODO: 시간 뭐로 가라치지?
         const now = new Date();

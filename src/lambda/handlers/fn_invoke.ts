@@ -85,13 +85,13 @@ export class InvokeHandler {
 
     if (action.invocationType === "RequestResponse") {
       return await invoke_requestResponse(res, invocation);
-    } else if (action.invocationType === "Event") {
-      return invoke_event(res, invocation);
-    } else {
-      const resp = {
-        message: `not supported invocationType: ${action.invocationType}`,
-      };
-      return helpers.replyJson(res, 400, resp);
     }
+    if (action.invocationType === "Event") {
+      return invoke_event(res, invocation);
+    }
+    const resp = {
+      message: `not supported invocationType: ${action.invocationType}`,
+    };
+    return helpers.replyJson(res, 400, resp);
   }
 }

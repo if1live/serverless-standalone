@@ -7,7 +7,7 @@ import {
   ServiceRunner,
 } from "../types.js";
 
-export interface Options {}
+export type Options = object;
 
 export const create = (
   definitions: FunctionDefinition[],

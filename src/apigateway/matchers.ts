@@ -64,9 +64,8 @@ export type PathMatcher = PathMatcher_Exact | PathMatcher_Node;
 const path_build = (path: string): PathMatcher => {
   if (!path.includes("{") && !path.includes("}")) {
     return path_build_exact(path);
-  } else {
-    return path_build_node(path);
   }
+  return path_build_node(path);
 };
 
 const path_build_exact = (path: string): PathMatcher_Exact => {
@@ -85,18 +84,18 @@ const path_build_node = (path: string): PathMatcher_Node => {
         _tag: "variadic_argument",
         identifier,
       };
-    } else if (input.endsWith("}")) {
+    }
+    if (input.endsWith("}")) {
       const identifier = input.replace("{", "").replace("}", "");
       return {
         _tag: "fixed_argument",
         identifier,
       };
-    } else {
-      return {
-        _tag: "constant",
-        value: input,
-      };
     }
+    return {
+      _tag: "constant",
+      value: input,
+    };
   };
 
   const slash: PathNode_Slash = { _tag: "slash" };
@@ -174,7 +173,7 @@ const path_match_node = (
       const nodes = [];
       while (nodes_input.length > 0) {
         const x = nodes_input.shift();
-        nodes.push(x!);
+        nodes.push(x as PathNode);
       }
 
       const tokens = nodes
@@ -213,9 +212,10 @@ const path_compare = (a: PathMatcher, b: PathMatcher) => {
     switch (m._tag) {
       case "exact":
         return 1;
-      case "node":
+      case "node": {
         const hasVariadic = m.nodes.some((x) => x._tag === "variadic_argument");
         return hasVariadic ? 3 : 2;
+      }
     }
   };
 

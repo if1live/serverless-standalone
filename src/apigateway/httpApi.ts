@@ -67,12 +67,14 @@ export const create = (
 
   const dispatchHttp: http.RequestListener = async (req, res) => {
     // req.url에는 query string 붙어있어서 이를 떼어내는 작업이 필요
-    const host = req.headers["host"] ?? "";
+    const host = req.headers.host ?? "";
     const url = new URL(`http://${host}${req.url}`);
+
+    const method = req.method ?? "GET";
 
     const found = mappings
       .map((x) => {
-        const match_method = MethodMatcher.match(x.matcher_method, req.method!);
+        const match_method = MethodMatcher.match(x.matcher_method, method);
         const match_path = PathMatcher.match(x.matcher_path, url.pathname);
 
         return {
@@ -89,9 +91,17 @@ export const create = (
       return handle_notFound(res, functions);
     }
 
+    // mapping 걸러낼때 검증된 조건. 컴파일 타임에서 검사하려고 넣어둠
+    if (!found.match_method) {
+      throw new Error("match_method is null");
+    }
+    if (!found.match_path) {
+      throw new Error("match_path is null");
+    }
+
     const event = await createEventV2(req, url, {
-      method: found.match_method!,
-      path: found.match_path!,
+      method: found.match_method,
+      path: found.match_path,
     });
 
     const awsRequestId = helpers.createUniqueId();
@@ -237,8 +247,8 @@ async function createEventV2(
     }),
   );
 
-  const cookies = req.headers["cookie"]
-    ? req.headers["cookie"].split(";").map((x) => x.trim())
+  const cookies = req.headers.cookie
+    ? req.headers.cookie.split(";").map((x) => x.trim())
     : undefined;
 
   const queryStringParameters: Record<string, string> = {};

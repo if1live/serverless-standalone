@@ -105,5 +105,5 @@ function extractTopic(sql: string): string | null {
   // SELECT * FROM 'some_topic'
   const re = /^SELECT \* FROM '(.+)'$/i;
   const m = re.exec(sql);
-  return m ? m[1]! : null;
+  return m ? (m[1] as string) : null;
 }
