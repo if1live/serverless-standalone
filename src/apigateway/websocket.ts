@@ -1,7 +1,7 @@
 import http from "node:http";
 import { createHttpTerminator } from "http-terminator";
 import * as R from "remeda";
-import { WebSocketServer } from "ws";
+import { WebSocketServer, VerifyClientCallbackAsync } from "ws";
 import {
   APIGatewayProxyHandler,
   APIGatewayProxyResult,
@@ -16,19 +16,28 @@ import { WebSocketEventFactory } from "./events.js";
 
 export const prefix = "/@connections/";
 
-// RFC에는 코드별로 이름을 붙이진 않았다.
-// https://www.rfc-editor.org/rfc/rfc6455#section-7.4.1
-// 에러코드 이름은 다른 저장소를 따라갔다.
-// https://github.com/Luka967/websocket-close-codes
+// https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api-integration-responses.html
+// The template selection expression, as described above, functions identically. For example:
+// /2\d\d/: Receive and transform successful responses
+// /4\d\d/: Receive and transform bad request errors
+// $default: Receive and transform all unexpected responses
+const handleResult = (
+  result: void | APIGatewayProxyResult,
+): [boolean, number?] => {
+  // status code 없는 경우는 성공으로 간주
+  if (!result) {
+    return [true, undefined];
+  } else if (!result.statusCode) {
+    return [true, undefined];
+  }
 
-// Successful operation / regular socket shutdown
-const CLOSE_NORMAL = 1000;
-
-// No close code frame has been receieved
-const CLOSE_ABNORMAL = 1006;
-
-// Internal server error while operating
-const CLOSE_SERVER_ERROR = 1011;
+  const statusCode = result.statusCode;
+  if (200 <= statusCode && statusCode < 300) {
+    return [true, undefined];
+  } else {
+    return [false, statusCode];
+  }
+};
 
 type MyWebSocket = WebSocket & {
   connectionId: string;
@@ -113,61 +122,58 @@ export const create = (
     }
   };
 
+  // connection에서 거부했을떄의 동작
+  // onerror
+  // onclose 1006
+  // onopen은 호출되지 않아야한다
+  // verifyClient에서 막아야 onopen보다 onerror를 빠르게 띄울수 있다
+  const verifyClient: VerifyClientCallbackAsync = async (info, cb) => {
+    const connectedAt = new Date();
+    const connectionId = helpers.createUniqueId();
+    (info.req as any)._connectionId = connectionId;
+    (info.req as any)._connectedAt = connectedAt;
+
+    // req.url 접근하면 "/path?foo=1&foo=2" 같이 나와서 URL로 바로 파싱 안된다
+    const url = new URL("http://localhost" + info.req.url);
+
+    const event = WebSocketEventFactory.connect({
+      connectedAt,
+      connectionId,
+      port,
+      searchParams: url.searchParams,
+    });
+
+    if (!definition_connect) {
+      return cb(true);
+    }
+
+    const { handler: f, name } = definition_connect;
+    const awsRequestId = helpers.createUniqueId();
+    const context = helpers.generateLambdaContext(name, awsRequestId);
+    try {
+      const result = await f(event as any, context, helpers.emptyCallback);
+      const [ok, code] = handleResult(result);
+      cb(ok, code);
+    } catch (e) {
+      console.error(e);
+      cb(false, 502);
+    }
+  };
+
   const server = http.createServer(dispatchApi);
-  const wss = new WebSocketServer({ server });
+  const wss = new WebSocketServer({ server, verifyClient });
   const httpTerminator = createHttpTerminator({ server });
 
   wss.on("connection", async (ws, req) => {
-    const connectedAt = new Date();
+    // verifyClient와 하드코딩 어떻게 연결하지
+    const connectionId = (req as any)._connectionId;
+    const connectedAt = (req as any)._connectedAt;
+
     const sock = ws as any as MyWebSocket;
     sock.lastActiveAt = connectedAt;
     sock.connectedAt = connectedAt;
-
-    const connectionId = helpers.createUniqueId();
     sock.connectionId = connectionId;
     sockets.set(connectionId, sock);
-
-    // https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api-integration-responses.html
-    // The template selection expression, as described above, functions identically. For example:
-    // /2\d\d/: Receive and transform successful responses
-    // /4\d\d/: Receive and transform bad request errors
-    // $default: Receive and transform all unexpected responses
-    const handleResult = (
-      result: void | APIGatewayProxyResult | APIGatewayProxyResultV2<never>,
-    ) => {
-      // status code 없는 경우는 성공으로 간주
-      if (!result) {
-        return true;
-      } else if (typeof result === "string") {
-        return true;
-      } else if (!result.statusCode) {
-        return true;
-      }
-
-      const statusCode = result.statusCode;
-      if (200 <= statusCode && statusCode < 300) {
-        return true;
-      } else if (400 <= statusCode && statusCode < 500) {
-        const message = `${result.statusCode}: ${result.body}`;
-        ws.close(CLOSE_NORMAL, message);
-        return false;
-      } else {
-        const message = `${result.statusCode}: ${result.body}`;
-        ws.close(CLOSE_SERVER_ERROR, message);
-        return false;
-      }
-    };
-
-    const handleError = (e: unknown) => {
-      if (e instanceof Error) {
-        const message = `${e.name}: ${e.message}`;
-        ws.close(CLOSE_SERVER_ERROR, message);
-        return false;
-      } else {
-        ws.close(CLOSE_SERVER_ERROR, "unknown exception");
-        return false;
-      }
-    };
 
     ws.on("close", async () => {
       // TODO: 종료코드?
@@ -188,10 +194,8 @@ export const create = (
       const context = helpers.generateLambdaContext(name, awsRequestId);
       try {
         const result = await f(event as any, context, helpers.emptyCallback);
-        handleResult(result);
       } catch (e) {
         console.error(e);
-        handleError(e);
       }
     });
 
@@ -228,10 +232,20 @@ export const create = (
       const context = helpers.generateLambdaContext(name, awsRequestId);
       try {
         const result = await f(event as any, context, helpers.emptyCallback);
-        handleResult(result);
       } catch (e) {
         console.error(e);
-        handleError(e);
+
+        const err = e as Error;
+        const payload = {
+          message: "Internal server error",
+          connectionId,
+          requestId: awsRequestId,
+          // custom
+          err_name: err.name,
+          err_message: err.message,
+          err_stack: err.stack,
+        };
+        ws.send(JSON.stringify(payload));
       }
     });
 
@@ -239,35 +253,6 @@ export const create = (
     ws.on("pong", () => touchSocket(sock));
 
     ws.on("error", console.error);
-
-    // 핸들러 등록이 다 끝난 다음에 connect 처리해야한다.
-    // 순서를 반대로 쓰면 클라에서 onopen에서 메세지를 보냈는데 서버측에 핸들러가 등록되지 않아서 놓칠 수 있다.
-    {
-      // req.url 접근하면 "/path?foo=1&foo=2" 같이 나와서 URL로 바로 파싱 안된다
-      const url = new URL("http://localhost" + req.url);
-
-      const event = WebSocketEventFactory.connect({
-        connectedAt,
-        connectionId,
-        port,
-        searchParams: url.searchParams,
-      });
-
-      if (!definition_connect) {
-        return;
-      }
-
-      const { handler: f, name } = definition_connect;
-      const awsRequestId = helpers.createUniqueId();
-      const context = helpers.generateLambdaContext(name, awsRequestId);
-      try {
-        const result = await f(event as any, context, helpers.emptyCallback);
-        handleResult(result);
-      } catch (e) {
-        console.error(e);
-        handleError(e);
-      }
-    }
   });
 
   const start = async () => {
