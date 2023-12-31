@@ -32,7 +32,9 @@
     "aws-sdk": "2.1311.0"
   },
   "dependencies": {
-    "@aws-sdk/client-sqs": "~3.188.0",
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.362.0",
+    "@aws-sdk/client-lambda": "^3.362.0",
+    "@aws-sdk/client-sqs": "^3.362.0",
     "cron": "^2.4.4",
     "debug": "^4.3.4",
     "http-terminator": "^3.2.0",
@@ -41,8 +43,6 @@
     "ws": "^8.15.0"
   },
   "devDependencies": {
-    "@aws-sdk/client-apigatewaymanagementapi": "~3.188.0",
-    "@aws-sdk/client-lambda": "~3.188.0",
     "@biomejs/biome": "^1.4.1",
     "@faker-js/faker": "^8.3.1",
     "@types/aws-lambda": "^8.10.130",
